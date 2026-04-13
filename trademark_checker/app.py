@@ -6,7 +6,8 @@ import streamlit as st
 
 from improvement import get_improvements
 from kipris_api import search_all_pages
-from scoring import calculate_score, similarity_percent, strip_html
+from report_generator import generate_report_pdf
+from scoring import evaluate_registration, similarity_percent, strip_html
 from search_mapper import get_category_suggestions
 from similarity_code_db import get_all_codes_by_class, get_similarity_codes
 
@@ -54,6 +55,155 @@ def deduplicate_results(items: list[dict], trademark_name: str) -> list[dict]:
         results.append(normalized)
     results.sort(key=lambda row: row["similarity"], reverse=True)
     return results
+
+
+def field_key(field: dict) -> str:
+    return f'{field.get("class_no", "")}|{field.get("description", "")}'
+
+
+def field_widget_key(field: dict) -> str:
+    return re.sub(r"[^0-9A-Za-z가-힣]+", "_", field_key(field))
+
+
+def field_label(field: dict) -> str:
+    return f'{field.get("description", "")} ({field.get("class_no", "")})'
+
+
+def current_selected_fields() -> list[dict]:
+    return st.session_state.get("selected_fields", [])
+
+
+def reset_analysis_state() -> None:
+    st.session_state.search_results = None
+    st.session_state.score = None
+    st.session_state.analysis = None
+    st.session_state.search_source = ""
+
+
+def get_field_inputs() -> dict:
+    return st.session_state.setdefault("field_inputs", {})
+
+
+def ensure_field_input(field: dict) -> dict:
+    inputs = get_field_inputs()
+    key = field_key(field)
+    if key not in inputs:
+        inputs[key] = {"specific_product": "", "selected_codes": []}
+    return inputs[key]
+
+
+def get_field_input(field: dict) -> dict:
+    return ensure_field_input(field)
+
+
+def add_selected_field(field: dict) -> bool:
+    selected_fields = current_selected_fields()
+    key = field_key(field)
+    if any(field_key(item) == key for item in selected_fields):
+        return True
+    if len(selected_fields) >= 3:
+        st.session_state.selection_error = "상품군은 최대 3개까지 선택할 수 있습니다."
+        return False
+    selected_fields.append(
+        {
+            "class_no": field.get("class_no", field.get("류", "")),
+            "description": field.get("description", field.get("설명", "")),
+            "example": field.get("example", field.get("예시", "")),
+        }
+    )
+    ensure_field_input(selected_fields[-1])
+    st.session_state.selection_error = ""
+    reset_analysis_state()
+    return True
+
+
+def remove_selected_field(target_key: str) -> None:
+    st.session_state.selected_fields = [
+        field for field in current_selected_fields() if field_key(field) != target_key
+    ]
+    inputs = get_field_inputs()
+    inputs.pop(target_key, None)
+    reset_analysis_state()
+
+
+def update_field_product(field: dict, product: str) -> None:
+    config = ensure_field_input(field)
+    if config["specific_product"] != product:
+        config["specific_product"] = product
+        config["selected_codes"] = []
+        reset_analysis_state()
+
+
+def toggle_field_code(field: dict, code: str) -> None:
+    config = ensure_field_input(field)
+    selected_codes = list(config.get("selected_codes", []))
+    if code in selected_codes:
+        selected_codes.remove(code)
+    else:
+        selected_codes.append(code)
+    config["selected_codes"] = selected_codes
+    reset_analysis_state()
+
+
+def field_ready(field: dict) -> bool:
+    config = get_field_input(field)
+    return bool(config.get("specific_product", "").strip() and config.get("selected_codes"))
+
+
+def all_fields_ready() -> bool:
+    selected_fields = current_selected_fields()
+    return bool(selected_fields) and all(field_ready(field) for field in selected_fields)
+
+
+def build_report_payload() -> dict:
+    analysis = st.session_state.get("analysis") or {}
+    field_reports = []
+    for report in analysis.get("field_reports", []):
+        field = report.get("field", {})
+        field_reports.append(
+            {
+                "field_label": field_label(field),
+                "specific_product": report.get("specific_product", ""),
+                "selected_classes": [field_label(field)],
+                "selected_codes": report.get("selected_codes", []),
+                "score": report.get("score", 0),
+                "score_label": report.get("band", {}).get("label", "-"),
+                "distinctiveness": report.get("distinctiveness", "-"),
+                "prior_count": report.get("prior_count", 0),
+                "total_prior_count": report.get("total_prior_count", 0),
+                "top_prior": report.get("top_prior", []),
+                "distinctiveness_analysis": report.get("distinctiveness_analysis", {}),
+                "product_similarity_analysis": report.get("product_similarity_analysis", {}),
+                "mark_similarity_analysis": report.get("mark_similarity_analysis", {}),
+                "confusion_analysis": report.get("confusion_analysis", {}),
+                "name_options": [
+                    {"name": item["name"], "expected_score": item["score"]}
+                    for item in report.get("improvements", {}).get("name_suggestions", [])
+                ],
+                "scope_options": [
+                    {
+                        "title": item["description"],
+                        "description": item["reason"],
+                        "expected_score": item["expected_score"],
+                    }
+                    for item in report.get("improvements", {}).get("code_suggestions", [])
+                ],
+                "class_options": [
+                    {
+                        "title": item["description"],
+                        "description": item["reason"],
+                        "expected_score": item["expected_score"],
+                    }
+                    for item in report.get("improvements", {}).get("class_suggestions", [])
+                ],
+            }
+        )
+    return {
+        "trademark_name": st.session_state.get("trademark_name", ""),
+        "trademark_type": st.session_state.get("trademark_type", ""),
+        "selected_classes": [field_label(field) for field in current_selected_fields()],
+        "field_reports": field_reports,
+    }
 
 
 def similarity_cell_style(value) -> str:
@@ -193,12 +343,24 @@ if "selected_category" not in st.session_state:
     st.session_state.selected_category = None
 if "specific_keyword" not in st.session_state:
     st.session_state.specific_keyword = ""
+if "specific_product" not in st.session_state:
+    st.session_state.specific_product = ""
+if "selected_fields" not in st.session_state:
+    st.session_state.selected_fields = []
+if "field_inputs" not in st.session_state:
+    st.session_state.field_inputs = {}
 if "selected_codes" not in st.session_state:
     st.session_state.selected_codes = []
 if "search_results" not in st.session_state:
     st.session_state.search_results = None
 if "score" not in st.session_state:
     st.session_state.score = None
+if "analysis" not in st.session_state:
+    st.session_state.analysis = None
+if "search_source" not in st.session_state:
+    st.session_state.search_source = ""
+if "selection_error" not in st.session_state:
+    st.session_state.selection_error = ""
 
 st.markdown(
     """
@@ -294,7 +456,7 @@ if st.session_state.step == 1:
 
 elif st.session_state.step == 2:
     st.markdown(f"## '{st.session_state.trademark_name}' 상표를")
-    st.markdown("### 어떤 분야에 사용하실 예정인가요?")
+    st.markdown("### 어떤 분야에 사용하실 예정인가요? 최대 3개까지 선택할 수 있어요.")
 
     st.markdown(
         """
@@ -329,9 +491,14 @@ elif st.session_state.step == 2:
                         unsafe_allow_html=True,
                     )
                 with col2:
-                    if st.button("선택", key=f"sel_{index}_{sug['류']}"):
-                        st.session_state.selected_category = sug
-                        st.session_state.step = 3
+                    already_selected = any(
+                        field_key(field) == field_key({"class_no": sug["류"], "description": sug["설명"]})
+                        for field in current_selected_fields()
+                    )
+                    if st.button("선택됨" if already_selected else "추가", key=f"sel_{index}_{sug['류']}"):
+                        add_selected_field(
+                            {"class_no": sug["류"], "description": sug["설명"], "example": sug["예시"]}
+                        )
                         st.rerun()
         else:
             st.warning("검색 결과가 없어요. 아래 전체 목록에서 선택해주세요.")
@@ -388,9 +555,14 @@ elif st.session_state.step == 2:
                     )
                 with col_b:
                     st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button("선택", key=f"goods_{cat['류']}"):
-                        st.session_state.selected_category = cat
-                        st.session_state.step = 3
+                    already_selected = any(
+                        field_key(field) == field_key({"class_no": cat["류"], "description": cat["설명"]})
+                        for field in current_selected_fields()
+                    )
+                    if st.button("선택됨" if already_selected else "추가", key=f"goods_{cat['류']}"):
+                        add_selected_field(
+                            {"class_no": cat["류"], "description": cat["설명"], "example": cat["예시"]}
+                        )
                         st.rerun()
 
     with tab2:
@@ -410,19 +582,54 @@ elif st.session_state.step == 2:
                     )
                 with col_b:
                     st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button("선택", key=f"service_{cat['류']}"):
-                        st.session_state.selected_category = cat
-                        st.session_state.step = 3
+                    already_selected = any(
+                        field_key(field) == field_key({"class_no": cat["류"], "description": cat["설명"]})
+                        for field in current_selected_fields()
+                    )
+                    if st.button("선택됨" if already_selected else "추가", key=f"service_{cat['류']}"):
+                        add_selected_field(
+                            {"class_no": cat["류"], "description": cat["설명"], "example": cat["예시"]}
+                        )
                         st.rerun()
+
+    if st.session_state.selection_error:
+        st.warning(st.session_state.selection_error)
+
+    if current_selected_fields():
+        st.markdown("#### 선택된 상품군")
+        for index, field in enumerate(current_selected_fields(), start=1):
+            col1, col2 = st.columns([6, 1])
+            with col1:
+                st.markdown(
+                    f"""
+                    <div class="card">
+                        <b>{index}. {field_label(field)}</b><br>
+                        <small style="color:#546E7A;">예시: {field.get('example', '-')}</small>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with col2:
+                if st.button("삭제", key=f"remove_field_{field_widget_key(field)}"):
+                    remove_selected_field(field_key(field))
+                    st.rerun()
 
     if st.button("← 이전 단계로"):
         st.session_state.step = 1
         st.rerun()
 
+    if st.button(
+        "다음 단계로 → 유사군코드 선택",
+        use_container_width=True,
+        type="primary",
+        disabled=not current_selected_fields(),
+    ):
+        st.session_state.step = 3
+        st.rerun()
+
 elif st.session_state.step == 3:
-    category = st.session_state.selected_category
-    st.markdown(f"## **{category['설명']} ({category['류']})** 중에서")
-    st.markdown("### 구체적으로 어떤 상품/서비스인가요?")
+    selected_fields = current_selected_fields()
+    st.markdown("## 선택한 상품군별 구체 상품/서비스와 유사군코드를 정해주세요")
 
     st.markdown(
         """
@@ -434,228 +641,361 @@ elif st.session_state.step == 3:
         unsafe_allow_html=True,
     )
 
-    specific_keyword = st.text_input(
-        "구체적인 상품명 입력",
-        placeholder=f"예) {category['예시'].split(',')[0].strip()}...",
-        value=st.session_state.specific_keyword,
-        label_visibility="collapsed",
-    )
-    st.session_state.specific_keyword = specific_keyword
+    for index, field in enumerate(selected_fields, start=1):
+        config = get_field_input(field)
+        widget_key = field_widget_key(field)
+        st.markdown("---")
+        st.markdown(f"### {index}. {field_label(field)}")
+        specific_product = st.text_input(
+            f"{field_label(field)} 구체 상품명 입력",
+            placeholder=f"예) {field.get('example', '').split(',')[0].strip()}...",
+            value=config.get("specific_product", ""),
+            key=f"product_{widget_key}",
+        )
+        update_field_product(field, specific_product)
+        config = get_field_input(field)
 
-    if specific_keyword:
-        codes = get_similarity_codes(specific_keyword, category["류"])
-        if codes:
-            st.markdown("#### 추천 유사군코드")
-            selected = st.session_state.selected_codes.copy()
-            for code_info in codes:
-                col1, col2 = st.columns([5, 1])
-                badge = ""
-                card_class = "code-card"
-                if code_info.get("추천"):
-                    badge = "⭐ 추천"
-                    card_class = "code-card code-recommended"
-                if code_info.get("판매업"):
-                    badge = "판매업 코드"
-                    card_class = "code-card code-sales"
+        if specific_product.strip():
+            codes = get_similarity_codes(specific_product, field["class_no"])
+            if codes:
+                st.markdown("#### 추천 유사군코드")
+                for code_info in codes:
+                    col1, col2 = st.columns([5, 1])
+                    badge = ""
+                    card_class = "code-card"
+                    if code_info.get("추천"):
+                        badge = "⭐ 추천"
+                        card_class = "code-card code-recommended"
+                    if code_info.get("판매업"):
+                        badge = "판매업 코드"
+                        card_class = "code-card code-sales"
 
-                with col1:
-                    st.markdown(
-                        f"""
-                    <div class="{card_class}">
-                        <b>{badge} {code_info['code']}</b> - {code_info['name']}<br>
-                        <small style="color:#546E7A">{code_info['설명']}</small>
-                        {"<br><small style='color:#2E7D32'>판매업도 함께 보호받으려면 이 코드도 선택하세요!</small>" if code_info.get("판매업") else ""}
-                    </div>
-                    """,
-                        unsafe_allow_html=True,
-                    )
-                with col2:
-                    is_selected = code_info["code"] in selected
-                    label = "✓ 선택됨" if is_selected else "선택"
-                    if st.button(label, key=f"code_{code_info['code']}"):
-                        if is_selected:
-                            selected.remove(code_info["code"])
-                        else:
-                            selected.append(code_info["code"])
-                        st.session_state.selected_codes = selected
-                        st.rerun()
-        else:
-            st.info("직접 유사군코드를 선택해주세요.")
+                    with col1:
+                        st.markdown(
+                            f"""
+                        <div class="{card_class}">
+                            <b>{badge} {code_info['code']}</b> - {code_info['name']}<br>
+                            <small style="color:#546E7A">{code_info['설명']}</small>
+                            {"<br><small style='color:#2E7D32'>판매업도 함께 보호받으려면 이 코드도 선택하세요!</small>" if code_info.get("판매업") else ""}
+                        </div>
+                        """,
+                            unsafe_allow_html=True,
+                        )
+                    with col2:
+                        is_selected = code_info["code"] in config.get("selected_codes", [])
+                        label = "✓ 선택됨" if is_selected else "선택"
+                        if st.button(label, key=f"code_{widget_key}_{code_info['code']}"):
+                            toggle_field_code(field, code_info["code"])
+                            st.rerun()
+            else:
+                st.info("추천 결과가 없어 전체 유사군코드 목록을 보여드립니다.")
 
-        if not codes:
-            all_codes = get_all_codes_by_class(category["류"])
-            selected = st.session_state.selected_codes.copy()
-            for code_info in all_codes:
-                col1, col2 = st.columns([5, 1])
-                with col1:
-                    st.markdown(
-                        f"""
-                    <div class="code-card">
-                        <b>{code_info['code']}</b> - {code_info['name']}<br>
-                        <small>{code_info['설명']}</small>
-                    </div>
-                    """,
-                        unsafe_allow_html=True,
-                    )
-                with col2:
-                    if st.button("선택", key=f"all_code_{code_info['code']}"):
-                        if code_info["code"] not in selected:
-                            selected.append(code_info["code"])
-                        st.session_state.selected_codes = selected
-                        st.rerun()
+            if not codes:
+                all_codes = get_all_codes_by_class(field["class_no"])
+                for code_info in all_codes:
+                    col1, col2 = st.columns([5, 1])
+                    with col1:
+                        st.markdown(
+                            f"""
+                        <div class="code-card">
+                            <b>{code_info['code']}</b> - {code_info['name']}<br>
+                            <small>{code_info['설명']}</small>
+                        </div>
+                        """,
+                            unsafe_allow_html=True,
+                        )
+                    with col2:
+                        is_selected = code_info["code"] in config.get("selected_codes", [])
+                        label = "✓ 선택됨" if is_selected else "선택"
+                        if st.button(label, key=f"all_code_{widget_key}_{code_info['code']}"):
+                            toggle_field_code(field, code_info["code"])
+                            st.rerun()
 
-        if st.session_state.selected_codes:
+        selected_codes = config.get("selected_codes", [])
+        if selected_codes:
             st.markdown("#### 선택된 유사군코드")
-            st.markdown(" ".join([f"**{code}**" for code in st.session_state.selected_codes]))
-            if st.button("검토 시작하기!", use_container_width=True, type="primary"):
-                st.session_state.step = 4
-                st.rerun()
+            st.markdown(" ".join([f"**{code}**" for code in selected_codes]))
+        else:
+            st.caption("이 상품군에 대한 유사군코드를 최소 1개 선택해주세요.")
 
     if st.button("← 이전 단계로"):
         st.session_state.step = 2
         st.rerun()
 
+    if st.button(
+        "검토 시작하기!",
+        use_container_width=True,
+        type="primary",
+        disabled=not all_fields_ready(),
+    ):
+        reset_analysis_state()
+        st.session_state.step = 4
+        st.rerun()
+
 elif st.session_state.step == 4:
-    if st.session_state.search_results is None:
+    if st.session_state.analysis is None:
         st.markdown("## 검토 중입니다...")
         progress = st.progress(0)
         status = st.empty()
+        field_reports = []
+        selected_fields = current_selected_fields()
+        total_fields = max(1, len(selected_fields))
 
-        status.markdown("✅ 식별력 검토 중...")
-        progress.progress(25)
-        time.sleep(0.4)
+        for index, field in enumerate(selected_fields, start=1):
+            config = get_field_input(field)
+            status.markdown(f"🔎 {field_label(field)} KIPRIS 선행상표 검색 및 분석 중... ({index}/{total_fields})")
+            all_results = []
+            used_real_search = False
 
-        status.markdown("✅ 유사군코드 매핑 완료...")
-        progress.progress(50)
-        time.sleep(0.4)
+            for code in config.get("selected_codes", []):
+                result = search_all_pages(st.session_state.trademark_name, similar_goods_code=code, max_pages=3)
+                if result and result.get("items"):
+                    all_results.extend([{**item, "queried_codes": [code]} for item in result["items"]])
+                if result and result.get("success") and not result.get("mock", False):
+                    used_real_search = True
 
-        status.markdown("🔎 KIPRIS 선행상표 검색 중...")
-        all_results = []
-        for code in st.session_state.selected_codes:
-            result = search_all_pages(st.session_state.trademark_name, similar_goods_code=code, max_pages=3)
-            if result and result.get("items"):
-                all_results.extend(result["items"])
+            if not all_results:
+                fallback = search_all_pages(st.session_state.trademark_name, max_pages=3)
+                if fallback and fallback.get("items"):
+                    all_results.extend([{**item, "queried_codes": []} for item in fallback["items"]])
+                if fallback and fallback.get("success") and not fallback.get("mock", False):
+                    used_real_search = True
 
-        if not all_results:
-            fallback = search_all_pages(st.session_state.trademark_name, max_pages=3)
-            if fallback and fallback.get("items"):
-                all_results.extend(fallback["items"])
+            field_analysis = evaluate_registration(
+                trademark_name=st.session_state.trademark_name,
+                trademark_type=st.session_state.trademark_type,
+                is_coined=st.session_state.is_coined,
+                selected_classes=[field["class_no"]],
+                selected_codes=config.get("selected_codes", []),
+                prior_items=all_results,
+                selected_fields=[field],
+                specific_product=config.get("specific_product", ""),
+            )
+            field_reports.append(
+                {
+                    **field_analysis,
+                    "field": field,
+                    "specific_product": config.get("specific_product", ""),
+                    "selected_codes": list(config.get("selected_codes", [])),
+                    "search_source": "실제 KIPRIS 데이터" if used_real_search else "Mock 데이터 또는 제한 조회",
+                    "improvements": get_improvements(
+                        st.session_state.trademark_name,
+                        config.get("selected_codes", []),
+                        field_analysis.get("included_priors", []),
+                        field_analysis.get("score", 0),
+                    ),
+                }
+            )
+            progress.progress(int(index / total_fields * 100))
 
-        progress.progress(75)
-        status.markdown("✅ 유사도 분석 중...")
-        unique_results = deduplicate_results(all_results, st.session_state.trademark_name)
-        st.session_state.search_results = unique_results
-        st.session_state.score = calculate_score(
-            st.session_state.trademark_name,
-            unique_results,
-            st.session_state.is_coined,
-            st.session_state.trademark_type,
-        )
+        st.session_state.analysis = {"field_reports": field_reports}
+        st.session_state.search_results = field_reports
+        st.session_state.score = None
+        st.session_state.search_source = "상품군별 개별 분석"
 
-        progress.progress(100)
-        status.markdown("✅ 검토 완료!")
+        status.markdown("✅ 상품군별 검토 완료!")
         time.sleep(0.5)
         st.rerun()
 
-    score = st.session_state.score
-    results = st.session_state.search_results or []
-    css_class, emoji, label = get_result_style(score)
-    color = "#FFFFFF" if score < 30 else "#2E7D32" if score >= 90 else "#1565C0" if score >= 70 else "#E65100" if score >= 50 else "#B71C1C"
-
+    analysis = st.session_state.analysis or {}
+    field_reports = analysis.get("field_reports", [])
     st.markdown(f"## **'{st.session_state.trademark_name}'** 등록 가능성 검토 결과")
-    st.markdown(
-        f"""
-        <div class="{css_class}">
-            <h1 style="font-size:64px; margin:0; color:{color};">{score}%</h1>
-            <h2 style="margin:8px 0; color:{color};">{emoji} {label}</h2>
-            <p style="color:{color}; margin:0;">상표명: <b>{st.session_state.trademark_name}</b> |
-            상품: <b>{st.session_state.selected_category['설명']}</b> |
-            코드: <b>{', '.join(st.session_state.selected_codes)}</b></p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown("### 선택한 상품군별로 따로 판단한 결과입니다.")
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("전체 검색 건수", f"{len(results)}건")
+        st.metric("검토 상품군", f"{len(field_reports)}개")
     with col2:
-        high_risk = sum(1 for row in results if row.get("similarity", 0) >= 70)
-        st.metric("주의 선행상표", f"{high_risk}건")
+        high_risk_fields = sum(1 for report in field_reports if report.get("score", 0) < 50)
+        st.metric("주의 상품군", f"{high_risk_fields}개")
     with col3:
         st.metric("조어상표 여부", "예" if st.session_state.is_coined else "아니오")
     with col4:
-        st.metric("검색된 유사군코드", f"{len(st.session_state.selected_codes)}개")
+        total_code_count = sum(len(report.get("selected_codes", [])) for report in field_reports)
+        st.metric("선택 유사군코드", f"{total_code_count}개")
 
-    if results:
+    for field_index, report in enumerate(field_reports, start=1):
+        field = report.get("field", {})
+        score = report.get("score", 0)
+        results = report.get("included_priors", [])
+        excluded_results = report.get("excluded_priors", [])
+        total_results = report.get("total_prior_count", len(results) + len(excluded_results))
+        css_class, emoji, label = get_result_style(score)
+        color = "#FFFFFF" if score < 30 else "#2E7D32" if score >= 90 else "#1565C0" if score >= 70 else "#E65100" if score >= 50 else "#B71C1C"
+
         st.markdown("---")
-        st.markdown("### 주요 선행상표 목록")
-        for index, item in enumerate(results[:10]):
-            similarity = item["similarity"]
-            if similarity >= 70:
-                card_class = "trademark-high"
-                risk_label = "높은 위험"
-                bar_color = "#F44336"
-            elif similarity >= 50:
-                card_class = "trademark-medium"
-                risk_label = "주의"
-                bar_color = "#FF9800"
-            else:
-                card_class = "trademark-low"
-                risk_label = "낮은 위험"
-                bar_color = "#4CAF50"
+        st.markdown(f"## {field_index}. {field_label(field)}")
+        st.markdown(
+            f"""
+            <div class="{css_class}">
+                <h1 style="font-size:56px; margin:0; color:{color};">{score}%</h1>
+                <h2 style="margin:8px 0; color:{color};">{emoji} {label}</h2>
+                <p style="color:{color}; margin:0;">구체 상품: <b>{report.get('specific_product', '-')}</b> |
+                코드: <b>{', '.join(report.get('selected_codes', []))}</b> |
+                검색 출처: <b>{report.get('search_source', '-')}</b></p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
+        sub1, sub2, sub3, sub4 = st.columns(4)
+        with sub1:
+            st.metric("전체 검색 건수", f"{total_results}건")
+        with sub2:
+            high_risk = sum(1 for row in results if row.get("confusion_score", 0) >= 65)
+            st.metric("주의 선행상표", f"{high_risk}건")
+        with sub3:
+            st.metric("선택 코드", f"{len(report.get('selected_codes', []))}개")
+        with sub4:
+            st.metric("필터 통과 후보", f"{report.get('prior_count', 0)}건")
+
+        st.markdown("### 식별력 판단")
+        distinctiveness = report.get("distinctiveness_analysis", {})
+        st.markdown(
+            f"""
+            <div class="card">
+                <b>{report.get('distinctiveness', '-')}</b><br>
+                <small style="color:#546E7A;">{distinctiveness.get('summary', '-')}</small>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        for reason in distinctiveness.get("reasons", []):
+            st.markdown(f"- {reason}")
+
+        st.markdown("### 상품 유사성 검토 결과")
+        product_analysis = report.get("product_similarity_analysis", {})
+        bucket_counts = product_analysis.get("bucket_counts", {})
+        st.markdown(
+            f"""
+            <div class="card">
+                <b>{product_analysis.get('summary', '-')}</b><br>
+                <small style="color:#546E7A;">
+                동일 유사군코드 {bucket_counts.get('same_code', 0)}건 /
+                동일 류 {bucket_counts.get('same_class', 0)}건 /
+                타 류 예외군 {bucket_counts.get('exception', 0)}건 /
+                제외 {bucket_counts.get('excluded', 0)}건
+                </small>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown("### 표장 유사성 검토 결과")
+        st.markdown(
+            f"""
+            <div class="card">
+                <b>{report.get('mark_similarity_analysis', {}).get('summary', '-')}</b><br>
+                <small style="color:#546E7A;">기존 문자열 유사도와 발음 유사 보조 로직은 유지하되, 상품 유사성 필터 통과 후보에만 적용했습니다.</small>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if results:
+            for item in results[:3]:
+                st.markdown(
+                    f"- `{item['trademarkName']}`: 외관 {item.get('appearance_similarity', 0)}%, "
+                    f"호칭 {item.get('phonetic_similarity', 0)}%, "
+                    f"관념 {item.get('conceptual_similarity', 0)}%, "
+                    f"표장 유사도 {item.get('mark_similarity', 0)}%"
+                )
+        else:
+            st.markdown("- 상품 유사성 필터를 통과한 후보가 없어 표장 유사도는 강한 감점에 쓰지 않았습니다.")
+
+        st.markdown("### 혼동 가능성 종합")
+        st.markdown(
+            f"""
+            <div class="card">
+                <b>{report.get('confusion_analysis', {}).get('summary', '-')}</b><br>
+                <small style="color:#546E7A;">검색 출처: {report.get('search_source', '-')}</small>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        if results:
+            st.markdown("### 주요 선행상표 목록")
+            for index, item in enumerate(results[:10]):
+                confusion_score = item.get("confusion_score", 0)
+                if confusion_score >= 75:
+                    card_class = "trademark-high"
+                    risk_label = "높은 위험"
+                    bar_color = "#F44336"
+                elif confusion_score >= 55:
+                    card_class = "trademark-medium"
+                    risk_label = "주의"
+                    bar_color = "#FF9800"
+                else:
+                    card_class = "trademark-low"
+                    risk_label = "낮은 위험"
+                    bar_color = "#4CAF50"
+
+                st.markdown(
+                    f"""
+                    <div class="{card_class}">
+                        <table style="width:100%; border:none;">
+                        <tr>
+                            <td style="width:60%">
+                                <b>{index + 1}. {item['trademarkName']}</b> &nbsp; {risk_label}<br>
+                                <small>출원번호: {item['applicationNumber']} | 출원일: {item['applicationDate']}</small><br>
+                                <small>상태: {item['registerStatus']} | 류: {item['classificationCode']} | 출원인: {item['applicantName']}</small><br>
+                                <small>상품군 판단: {item.get('product_similarity_label', '-')} | {item.get('product_reason', '-')}</small>
+                            </td>
+                            <td style="width:40%; text-align:right; vertical-align:top;">
+                                <b style="font-size:20px;">혼동 위험 {confusion_score}%</b><br>
+                                <small>표장 {item.get('mark_similarity', 0)}% / 상품 {item.get('product_similarity_score', 0)}%</small><br>
+                                <div style="background:#ddd; border-radius:4px; height:8px; margin-top:4px;">
+                                    <div style="background:{bar_color}; width:{confusion_score}%; height:8px; border-radius:4px;"></div>
+                                </div>
+                                <br>
+                                <a href="https://www.kipris.or.kr" target="_blank" style="color:#2196F3; font-size:12px;">KIPRIS에서 보기 →</a>
+                            </td>
+                        </tr>
+                        </table>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            st.markdown("### 데이터 표 보기")
+            result_df = pd.DataFrame(
+                [
+                    {
+                        "상표명": row["trademarkName"],
+                        "혼동위험": f'{row.get("confusion_score", 0)}%',
+                        "표장유사도": f'{row.get("mark_similarity", 0)}%',
+                        "상품판단": row.get("product_similarity_label", "-"),
+                        "상태": row["registerStatus"],
+                        "류": row["classificationCode"],
+                        "출원인": row["applicantName"],
+                    }
+                    for row in results[:10]
+                ]
+            )
+            styled_df = result_df.style.map(similarity_cell_style, subset=["혼동위험", "표장유사도"])
+            st.dataframe(styled_df, use_container_width=True, hide_index=True)
+        else:
             st.markdown(
-                f"""
-                <div class="{card_class}">
-                    <table style="width:100%; border:none;">
-                    <tr>
-                        <td style="width:60%">
-                            <b>{index + 1}. {item['trademarkName']}</b> &nbsp; {risk_label}<br>
-                            <small>출원번호: {item['applicationNumber']} | 출원일: {item['applicationDate']}</small><br>
-                            <small>상태: {item['registerStatus']} | 류: {item['classificationCode']} | 출원인: {item['applicantName']}</small>
-                        </td>
-                        <td style="width:40%; text-align:right; vertical-align:top;">
-                            <b style="font-size:20px;">유사도 {similarity}%</b><br>
-                            <div style="background:#ddd; border-radius:4px; height:8px; margin-top:4px;">
-                                <div style="background:{bar_color}; width:{similarity}%; height:8px; border-radius:4px;"></div>
-                            </div>
-                            <br>
-                            <a href="https://www.kipris.or.kr" target="_blank" style="color:#2196F3; font-size:12px;">KIPRIS에서 보기 →</a>
-                        </td>
-                    </tr>
-                    </table>
+                """
+                <div style="background:#E8F5E9; border:2px solid #4CAF50; border-radius:12px; padding:20px; text-align:center;">
+                    <h3 style="color:#2E7D32;">상품 유사성 검토를 통과한 선행상표가 없어요!</h3>
+                    <p style="color:#388E3C;">타 류·타 코드 후보는 점수에서 제외했고,<br>
+                    등록 가능성이 매우 높습니다!</p>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-        st.markdown("### 데이터 표 보기")
-        result_df = pd.DataFrame(
-            [
-                {
-                    "상표명": row["trademarkName"],
-                    "유사도": f'{row["similarity"]}%',
-                    "상태": row["registerStatus"],
-                    "류": row["classificationCode"],
-                    "출원인": row["applicantName"],
-                }
-                for row in results[:10]
-            ]
-        )
-        styled_df = result_df.style.map(similarity_cell_style, subset=["유사도"])
-        st.dataframe(styled_df, use_container_width=True, hide_index=True)
-    else:
-        st.markdown(
-            """
-            <div style="background:#E8F5E9; border:2px solid #4CAF50; border-radius:12px; padding:20px; text-align:center;">
-                <h3 style="color:#2E7D32;">유사한 선행상표가 없어요!</h3>
-                <p style="color:#388E3C;">선택한 상품군에서 유사한 상표가 발견되지 않았어요.<br>
-                등록 가능성이 매우 높습니다!</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        if excluded_results:
+            st.markdown(
+                f"""
+                <div class="tip-box" style="margin-top:12px;">
+                전혀 다른 상품영역으로 판단된 후보 {len(excluded_results)}건은 강한 감점에 반영하지 않았습니다.
+                예: {', '.join(row['trademarkName'] for row in excluded_results[:3])}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
     st.markdown(
         """
@@ -672,8 +1012,13 @@ elif st.session_state.step == 4:
             st.session_state.step = 5
             st.rerun()
     with col2:
-        if st.button("PDF 보고서 받기", use_container_width=True):
-            st.info("PDF 생성 기능은 준비 중이에요!")
+        st.download_button(
+            "PDF 보고서 받기",
+            data=generate_report_pdf(build_report_payload()),
+            file_name=f"{st.session_state.trademark_name}_검토보고서.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
     with col3:
         if st.button("처음부터 다시", use_container_width=True):
             reset_session()
@@ -681,86 +1026,76 @@ elif st.session_state.step == 4:
 
 elif st.session_state.step == 5:
     st.markdown("## 등록 가능성을 높이는 방법")
-    st.markdown(f"현재: **{st.session_state.trademark_name}** - {st.session_state.score}%")
+    st.markdown("### 선택한 상품군별 개선안을 따로 제안합니다.")
 
-    improvements = get_improvements(
-        st.session_state.trademark_name,
-        st.session_state.selected_codes,
-        st.session_state.search_results or [],
-        st.session_state.score or 0,
-    )
+    for index, report in enumerate((st.session_state.analysis or {}).get("field_reports", []), start=1):
+        improvements = report.get("improvements", {})
+        field = report.get("field", {})
+        current_score = report.get("score", 0)
 
-    st.markdown("---")
-    st.markdown("### 방법 1: 상표명 변경")
-    st.markdown(
-        """
-    <div class="tip-box">
-    현재 상표명과 발음이 다른 새로운 이름을 사용하면 등록 가능성이 높아져요.
-    </div>
-    """,
-        unsafe_allow_html=True,
-    )
+        st.markdown("---")
+        st.markdown(f"## {index}. {field_label(field)}")
+        st.markdown(f"현재: **{st.session_state.trademark_name}** / **{report.get('specific_product', '-') }** / **{current_score}%**")
 
-    for suggestion in improvements.get("name_suggestions", []):
-        score_value = suggestion.get("score", 0)
-        if score_value >= 90:
-            color, bg = "#2E7D32", "#E8F5E9"
-        elif score_value >= 70:
-            color, bg = "#1565C0", "#E3F2FD"
-        else:
-            color, bg = "#E65100", "#FFF3E0"
-
+        st.markdown("### 방법 1: 상표명 변경")
         st.markdown(
-            f"""
-            <div style="background:{bg}; border-radius:8px; padding:12px 16px; margin:6px 0; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <b style="font-size:18px;">{suggestion['name']}</b><br>
-                    <small style="color:#546E7A">{suggestion.get('reason', '')}</small>
+            """
+        <div class="tip-box">
+        현재 상표명과 발음이 다른 새로운 이름을 사용하면 등록 가능성이 높아져요.
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+
+        for suggestion in improvements.get("name_suggestions", []):
+            score_value = suggestion.get("score", 0)
+            if score_value >= 90:
+                color, bg = "#2E7D32", "#E8F5E9"
+            elif score_value >= 70:
+                color, bg = "#1565C0", "#E3F2FD"
+            else:
+                color, bg = "#E65100", "#FFF3E0"
+
+            st.markdown(
+                f"""
+                <div style="background:{bg}; border-radius:8px; padding:12px 16px; margin:6px 0; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <b style="font-size:18px;">{suggestion['name']}</b><br>
+                        <small style="color:#546E7A">{suggestion.get('reason', '')}</small>
+                    </div>
+                    <div style="text-align:right;">
+                        <b style="font-size:22px; color:{color};">예상 {score_value}%</b>
+                    </div>
                 </div>
-                <div style="text-align:right;">
-                    <b style="font-size:22px; color:{color};">예상 {score_value}%</b>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        st.markdown("### 방법 2: 상품 범위 조정")
+        for suggestion in improvements.get("code_suggestions", []):
+            st.markdown(
+                f"""
+                <div style="background:#E3F2FD; border-radius:8px; padding:12px 16px; margin:6px 0;">
+                    <b>{suggestion['description']}</b><br>
+                    <small style="color:#546E7A">{suggestion.get('reason', '')}</small><br>
+                    <b style="color:#1565C0;">→ 예상 {suggestion.get('expected_score', 0)}%로 향상</b>
                 </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+                """,
+                unsafe_allow_html=True,
+            )
 
-    st.markdown("---")
-    st.markdown("### 방법 2: 상품 범위 조정")
-    st.markdown(
-        """
-    <div class="tip-box">
-    충돌하는 유사군코드를 제거하면 등록 가능성이 높아질 수 있어요.
-    </div>
-    """,
-        unsafe_allow_html=True,
-    )
-
-    for suggestion in improvements.get("code_suggestions", []):
-        st.markdown(
-            f"""
-            <div style="background:#E3F2FD; border-radius:8px; padding:12px 16px; margin:6px 0;">
-                <b>{suggestion['description']}</b><br>
-                <small style="color:#546E7A">{suggestion.get('reason', '')}</small><br>
-                <b style="color:#1565C0;">→ 예상 {suggestion.get('expected_score', 0)}%로 향상</b>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    st.markdown("---")
-    st.markdown("### 방법 3: 다른 상품군 검토")
-    for suggestion in improvements.get("class_suggestions", []):
-        st.markdown(
-            f"""
-            <div style="background:#F1F8E9; border-radius:8px; padding:12px 16px; margin:6px 0;">
-                <b>{suggestion['description']}</b><br>
-                <small style="color:#546E7A">{suggestion.get('reason', '')}</small><br>
-                <b style="color:#2E7D32;">→ 예상 {suggestion.get('expected_score', 0)}%로 향상</b>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.markdown("### 방법 3: 다른 상품군 검토")
+        for suggestion in improvements.get("class_suggestions", []):
+            st.markdown(
+                f"""
+                <div style="background:#F1F8E9; border-radius:8px; padding:12px 16px; margin:6px 0;">
+                    <b>{suggestion['description']}</b><br>
+                    <small style="color:#546E7A">{suggestion.get('reason', '')}</small><br>
+                    <b style="color:#2E7D32;">→ 예상 {suggestion.get('expected_score', 0)}%로 향상</b>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
     st.markdown(
         """

@@ -65,6 +65,12 @@ ALIASES = {
     "식당": "카페",
 }
 
+CODE_METADATA = {
+    row["code"]: {**row, "기준상품": keyword}
+    for keyword, rows in SIMILARITY_CODE_DB.items()
+    for row in rows
+}
+
 
 def _normalize(text: str) -> str:
     return text.strip().lower().replace(" ", "")
@@ -120,6 +126,18 @@ def get_similarity_codes(product_name: str, class_no: str | None = None, limit: 
         ),
     )
     return ordered[:limit]
+
+
+def get_code_metadata(code: str) -> dict | None:
+    """유사군코드 메타데이터를 반환한다."""
+    row = CODE_METADATA.get(code)
+    return row.copy() if row else None
+
+
+def get_class_for_code(code: str) -> str | None:
+    """유사군코드에 연결된 류를 반환한다."""
+    row = CODE_METADATA.get(code)
+    return row.get("류") if row else None
 
 
 def get_all_codes_by_class(class_no: str) -> List[dict]:

@@ -40,7 +40,9 @@ def get_improvements(
         seen.add(candidate)
         max_conflict = 0
         for item in search_results[:5]:
-            max_conflict = max(max_conflict, similarity_percent(candidate, item.get("trademarkName", "")))
+            baseline = item.get("mark_similarity", item.get("similarity", 0))
+            compared = similarity_percent(candidate, item.get("trademarkName", ""))
+            max_conflict = max(max_conflict, int(max(baseline, compared)))
         bonus = max(5, 16 - int(max_conflict / 10))
         expected_score = min(96, max(current_score + 1, current_score + bonus - index))
         name_suggestions.append(

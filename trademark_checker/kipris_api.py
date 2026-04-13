@@ -37,6 +37,8 @@ import sys
 import requests
 import xml.etree.ElementTree as ET
 
+from similarity_code_db import get_class_for_code
+
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -107,7 +109,7 @@ def _class_from_goods_code(code: str) -> str:
     이 함수는 기본적으로 빈 문자열을 반환합니다.
     실제 필터링은 app.py의 CODE_TO_CLASS 룩업테이블을 사용하세요.
     """
-    return ""
+    return get_class_for_code(code) or ""
 
 
 # ── XML 파싱 헬퍼 ─────────────────────────────────────────────────
