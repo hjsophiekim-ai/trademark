@@ -1,4 +1,4 @@
-"""등록 가능성을 높이기 위한 개선안을 만든다."""
+"""등록 가능성을 높이기 위한 개선안."""
 
 from __future__ import annotations
 
@@ -7,114 +7,91 @@ from typing import Iterable, List
 from scoring import similarity_percent
 
 
-def _normalize(text: str) -> str:
-    return text.strip()
-
-
-def _latin_name_variants(name: str) -> List[str]:
+def _latin_variants(name: str) -> List[str]:
     base = name.upper().replace(" ", "")
     return [f"{base}Z", f"{base}X", f"{base}IA", f"{base}ONE", f"{base}LAB"]
 
 
-def _korean_name_variants(name: str) -> List[str]:
+def _korean_variants(name: str) -> List[str]:
     base = name.replace(" ", "")
     return [f"{base}온", f"{base}리", f"{base}랩", f"{base}플러스", f"{base}앤코"]
 
 
-def _variant_candidates(name: str) -> List[str]:
-    clean = _normalize(name)
-    if not clean:
+def _name_variants(name: str) -> List[str]:
+    if not name.strip():
         return []
-    if clean.encode("utf-8", errors="ignore").isascii():
-        return _latin_name_variants(clean)
-    return _korean_name_variants(clean)
+    if name.encode("utf-8", errors="ignore").isascii():
+        return _latin_variants(name)
+    return _korean_variants(name)
 
 
-def generate_name_improvements(name: str, current_score: int, prior_items: List[dict]) -> List[dict]:
-    suggestions = []
+def get_improvements(
+    trademark_name: str,
+    selected_codes: Iterable[str],
+    search_results: List[dict],
+    current_score: int,
+) -> dict:
+    """초보 사용자용 개선안 묶음."""
+    name_suggestions = []
     seen = set()
-    for index, variant in enumerate(_variant_candidates(name), start=1):
-        if variant in seen:
+    for index, candidate in enumerate(_name_variants(trademark_name), start=1):
+        if candidate in seen:
             continue
-        seen.add(variant)
+        seen.add(candidate)
         max_conflict = 0
-        for item in prior_items[:5]:
-            max_conflict = max(max_conflict, similarity_percent(variant, item.get("trademarkName", "")))
+        for item in search_results[:5]:
+            max_conflict = max(max_conflict, similarity_percent(candidate, item.get("trademarkName", "")))
         bonus = max(5, 16 - int(max_conflict / 10))
         expected_score = min(96, max(current_score + 1, current_score + bonus - index))
-        suggestions.append({"name": variant, "expected_score": expected_score})
-    return suggestions[:5]
+        name_suggestions.append(
+            {
+                "name": candidate,
+                "score": expected_score,
+                "reason": "기존 선행상표와 발음·철자를 조금 더 다르게 조정한 안입니다.",
+            }
+        )
 
-
-def generate_scope_improvements(selected_codes: Iterable[str], current_score: int, prior_items: List[dict]) -> List[dict]:
-    codes = list(selected_codes)
-    results = []
-    sale_codes = [code for code in codes if code.startswith("S")]
-    goods_codes = [code for code in codes if code.startswith("G")]
+    selected_codes = list(selected_codes)
+    code_suggestions = []
+    sale_codes = [code for code in selected_codes if code.startswith("S")]
+    goods_codes = [code for code in selected_codes if code.startswith("G")]
 
     if sale_codes:
-        results.append(
+        code_suggestions.append(
             {
-                "title": "판매업 코드 제외",
+                "description": f"{', '.join(sale_codes)} 제외 후 핵심 상품 코드만 유지",
+                "reason": "판매업 코드를 빼면 충돌 범위가 줄어들 수 있어요.",
                 "expected_score": min(95, current_score + 10),
-                "description": f"{', '.join(sale_codes)}를 제외하면 판매업 충돌 가능성을 줄일 수 있습니다.",
             }
         )
 
     if goods_codes:
-        results.append(
+        code_suggestions.append(
             {
-                "title": "핵심 상품 코드만 우선 출원",
+                "description": f"{goods_codes[0]} 중심으로 좁혀서 우선 출원",
+                "reason": "처음에는 가장 중요한 상품만 출원하면 거절 위험을 낮추기 좋습니다.",
                 "expected_score": min(95, current_score + 7),
-                "description": f"{goods_codes[0]} 중심으로 범위를 좁히면 충돌 위험을 낮출 수 있습니다.",
             }
         )
 
-    if any("43" in str(item.get("classificationCode", "")) for item in prior_items):
-        results.append(
-            {
-                "title": "서비스업 범주 재검토",
-                "expected_score": min(95, current_score + 12),
-                "description": "43류 충돌이 많다면 42류 등 인접 서비스군으로 전략을 다시 볼 수 있습니다.",
-            }
-        )
+    class_suggestions = [
+        {
+            "description": "35류 소매업 대신 실제 제공 서비스군 재검토",
+            "reason": "온라인 판매보다 개발·교육·제조 중심이면 다른 류가 더 적합할 수 있습니다.",
+            "expected_score": min(95, current_score + 8),
+        },
+        {
+            "description": "핵심 업종 1개만 먼저 출원 후 추후 확대",
+            "reason": "초기 충돌 리스크를 줄이고 등록 전략을 단순하게 만들 수 있습니다.",
+            "expected_score": min(95, current_score + 5),
+        },
+    ]
 
-    return results[:3]
-
-
-def generate_class_improvements(selected_fields: Iterable[dict], current_score: int) -> List[dict]:
-    fields = list(selected_fields)
-    class_numbers = {field["class_no"] for field in fields}
-    options = []
-
-    if "35류" in class_numbers:
-        options.append(
-            {
-                "title": "35류 대신 다른 서비스군 검토",
-                "expected_score": min(95, current_score + 9),
-                "description": "소매업 대신 실제 서비스 제공 중심이라면 42류, 41류 등으로 조정할 수 있습니다.",
-            }
-        )
-
-    if "43류" in class_numbers:
-        options.append(
-            {
-                "title": "43류와 제품류 분리 출원",
-                "expected_score": min(95, current_score + 6),
-                "description": "카페/음식점업과 커피 상품류를 분리해서 접근하면 충돌 분석이 더 명확해집니다.",
-            }
-        )
-
-    if not options:
-        options.append(
-            {
-                "title": "핵심 업종부터 우선 출원",
-                "expected_score": min(95, current_score + 5),
-                "description": "처음에는 가장 중요한 업종 1개만 먼저 출원하고 이후 확대하는 방식도 가능합니다.",
-            }
-        )
-
-    return options[:2]
+    return {
+        "name_suggestions": name_suggestions[:5],
+        "code_suggestions": code_suggestions[:3],
+        "class_suggestions": class_suggestions[:3],
+    }
 
 
 def build_improvement_plan(
@@ -124,8 +101,24 @@ def build_improvement_plan(
     prior_items: List[dict],
     selected_fields: Iterable[dict],
 ) -> dict:
+    """기존 호환용 래퍼."""
+    payload = get_improvements(trademark_name, selected_codes, prior_items, current_score)
     return {
-        "name_options": generate_name_improvements(trademark_name, current_score, prior_items),
-        "scope_options": generate_scope_improvements(selected_codes, current_score, prior_items),
-        "class_options": generate_class_improvements(selected_fields, current_score),
+        "name_options": [{"name": item["name"], "expected_score": item["score"]} for item in payload["name_suggestions"]],
+        "scope_options": [
+            {
+                "title": item["description"],
+                "description": item["reason"],
+                "expected_score": item["expected_score"],
+            }
+            for item in payload["code_suggestions"]
+        ],
+        "class_options": [
+            {
+                "title": item["description"],
+                "description": item["reason"],
+                "expected_score": item["expected_score"],
+            }
+            for item in payload["class_suggestions"]
+        ],
     }
