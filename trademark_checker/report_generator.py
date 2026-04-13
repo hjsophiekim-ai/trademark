@@ -1,4 +1,4 @@
-"""PDF 보고서 생성."""
+"""PDF 보고서를 생성한다."""
 
 from __future__ import annotations
 
@@ -12,36 +12,40 @@ class KoreanPDF(FPDF):
     def __init__(self) -> None:
         super().__init__()
         self.font_family_name = "Helvetica"
-        regular = "C:/Windows/Fonts/malgun.ttf"
-        bold = "C:/Windows/Fonts/malgunbd.ttf"
+        regular_font = "C:/Windows/Fonts/malgun.ttf"
+        bold_font = "C:/Windows/Fonts/malgunbd.ttf"
 
         try:
-            if os.path.exists(regular):
-                self.add_font("Malgun", "", regular)
+            if os.path.exists(regular_font):
+                self.add_font("Malgun", "", regular_font)
                 self.font_family_name = "Malgun"
-            if os.path.exists(bold):
-                self.add_font("MalgunB", "", bold)
+            if os.path.exists(bold_font):
+                self.add_font("Malgun", "B", bold_font)
         except Exception:
             self.font_family_name = "Helvetica"
 
     def kfont(self, size: int = 11, bold: bool = False) -> None:
-        if bold and self.font_family_name == "Malgun":
-            try:
-                self.set_font("MalgunB", "", size)
-                return
-            except Exception:
-                pass
-        self.set_font(self.font_family_name, "", size)
+        style = "B" if bold and self.font_family_name == "Malgun" else ""
+        self.set_font(self.font_family_name, style, size)
 
 
 def _safe_text(value: str) -> str:
-    return value.replace("\n", " ").replace("⛔", "불가").strip()
+    return (
+        value.replace("\n", " ")
+        .replace("⛔", "불가")
+        .replace("✅", "확인")
+        .replace("⚠️", "주의")
+        .replace("⚠", "주의")
+        .replace("→", "->")
+        .strip()
+    )
 
 
 def generate_report_pdf(payload: dict) -> bytes:
     pdf = KoreanPDF()
+    pdf.set_auto_page_break(auto=True, margin=14)
     pdf.add_page()
-    pdf.set_auto_page_break(True, 14)
+    content_width = pdf.w - pdf.l_margin - pdf.r_margin
 
     pdf.kfont(18, bold=True)
     pdf.cell(0, 12, "상표등록 가능성 검토 서비스", new_x="LMARGIN", new_y="NEXT")
@@ -64,7 +68,7 @@ def generate_report_pdf(payload: dict) -> bytes:
     pdf.kfont(10)
     for label, value in summary_rows:
         pdf.set_x(pdf.l_margin)
-        pdf.multi_cell(0, 7, _safe_text(f"{label}: {value}"))
+        pdf.multi_cell(content_width, 7, _safe_text(f"{label}: {value}"))
     pdf.ln(2)
 
     pdf.kfont(12, bold=True)
@@ -72,19 +76,22 @@ def generate_report_pdf(payload: dict) -> bytes:
     pdf.kfont(10)
     if not payload["top_prior"]:
         pdf.set_x(pdf.l_margin)
-        pdf.cell(0, 7, "확인된 주요 선행상표가 없습니다.", new_x="LMARGIN", new_y="NEXT")
+        pdf.multi_cell(content_width, 7, "확인된 주요 선행상표가 없습니다.")
     else:
-        for idx, item in enumerate(payload["top_prior"], start=1):
-            line = (
-                f"{idx}. {item.get('trademarkName', '-')}"
-                f" | {item.get('registerStatus', '-')}"
-                f" | {item.get('classificationCode', '-')}"
-                f" | 유사도 {item.get('similarity', 0)}%"
+        for index, item in enumerate(payload["top_prior"], start=1):
+            pdf.set_x(pdf.l_margin)
+            pdf.multi_cell(
+                content_width,
+                7,
+                _safe_text(
+                    f"{index}. {item.get('trademarkName', '-')}"
+                    f" | {item.get('registerStatus', '-')}"
+                    f" | {item.get('classificationCode', '-')}"
+                    f" | 유사도 {item.get('similarity', 0)}%"
+                ),
             )
             pdf.set_x(pdf.l_margin)
-            pdf.multi_cell(0, 7, _safe_text(line))
-            pdf.set_x(pdf.l_margin)
-            pdf.multi_cell(0, 7, _safe_text(f"출원인: {item.get('applicantName', '-')}"))
+            pdf.multi_cell(content_width, 7, _safe_text(f"출원인: {item.get('applicantName', '-')}"))
             pdf.ln(1)
 
     pdf.kfont(12, bold=True)
@@ -92,11 +99,18 @@ def generate_report_pdf(payload: dict) -> bytes:
     pdf.kfont(10)
     for option in payload["name_options"]:
         pdf.set_x(pdf.l_margin)
-        pdf.multi_cell(0, 7, _safe_text(f"상표명 대안: {option['name']} -> 예상 {option['expected_score']}%"))
+        pdf.multi_cell(content_width, 7, _safe_text(f"상표명 대안: {option['name']} -> 예상 {option['expected_score']}%"))
     for option in payload["scope_options"]:
         pdf.set_x(pdf.l_margin)
         pdf.multi_cell(
-            0,
+            content_width,
+            7,
+            _safe_text(f"{option['title']}: {option['description']} (예상 {option['expected_score']}%)"),
+        )
+    for option in payload["class_options"]:
+        pdf.set_x(pdf.l_margin)
+        pdf.multi_cell(
+            content_width,
             7,
             _safe_text(f"{option['title']}: {option['description']} (예상 {option['expected_score']}%)"),
         )
@@ -104,5 +118,5 @@ def generate_report_pdf(payload: dict) -> bytes:
     pdf.ln(4)
     pdf.kfont(8)
     pdf.set_x(pdf.l_margin)
-    pdf.multi_cell(0, 5, "본 결과는 참고용 AI 분석입니다. 최종 출원 판단은 변리사와 상담해 주세요.")
+    pdf.multi_cell(content_width, 5, "본 결과는 AI 분석 참고용이며 최종 판단은 변리사 상담을 권장합니다.")
     return bytes(pdf.output())
