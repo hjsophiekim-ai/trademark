@@ -1,4 +1,4 @@
-"""상표 등록 가능성 분석 로직."""
+﻿"""상표 등록 가능성 분석 로직."""
 
 from __future__ import annotations
 
@@ -6,21 +6,17 @@ import re
 from difflib import SequenceMatcher
 from typing import Iterable, List
 
+from goods_scope import classify_product_similarity, normalize_selected_input
+from legal_scope import SCOPE_GROUP_LABELS, build_scope_counts
+from prior_mark_status import (
+    merge_refusal_analysis as merge_refusal_analysis_payload,
+    normalize_refusal_analysis as normalize_refusal_analysis_payload,
+    status_profile as get_status_profile,
+)
 from similarity_code_db import get_code_metadata
 
 
 COMMON_WORDS = {"사랑", "사랑해", "브랜드", "맛있는", "행복", "좋은", "예쁜", "최고"}
-STATUS_WEIGHT = {
-    "등록": 1.0,
-    "출원": 0.78,
-    "심사": 0.7,
-    "공고": 0.86,
-    "거절": 0.3,
-    "포기": 0.2,
-    "무효": 0.2,
-    "취하": 0.2,
-    "소멸": 0.2,
-}
 ECONOMIC_LINKS = {
     frozenset({"3", "35"}),
     frozenset({"5", "35"}),
@@ -48,6 +44,98 @@ GROUP_LABEL = {
     "group_same_class": "동일 류",
     "group_related_market": "경제적 견련성 있는 타 류",
     "group_irrelevant": "무관한 타 류",
+}
+STATUS_PROFILES = (
+    {
+        "keywords": ("등록",),
+        "normalized": "등록",
+        "category": "live_blockers",
+        "survival_label": "실질 장애물",
+        "counts_toward_final_score": True,
+        "confusion_weight": 1.0,
+        "score_weight": 1.0,
+    },
+    {
+        "keywords": ("출원",),
+        "normalized": "출원",
+        "category": "live_blockers",
+        "survival_label": "실질 장애물",
+        "counts_toward_final_score": True,
+        "confusion_weight": 0.96,
+        "score_weight": 0.92,
+    },
+    {
+        "keywords": ("심사",),
+        "normalized": "심사중",
+        "category": "live_blockers",
+        "survival_label": "실질 장애물",
+        "counts_toward_final_score": True,
+        "confusion_weight": 0.93,
+        "score_weight": 0.86,
+    },
+    {
+        "keywords": ("공고",),
+        "normalized": "공고",
+        "category": "live_blockers",
+        "survival_label": "실질 장애물",
+        "counts_toward_final_score": True,
+        "confusion_weight": 0.94,
+        "score_weight": 0.88,
+    },
+    {
+        "keywords": ("거절",),
+        "normalized": "거절",
+        "category": "historical_references",
+        "survival_label": "역사적 참고자료",
+        "counts_toward_final_score": False,
+        "confusion_weight": 0.48,
+        "score_weight": 0.0,
+    },
+    {
+        "keywords": ("포기",),
+        "normalized": "포기",
+        "category": "historical_references",
+        "survival_label": "역사적 참고자료",
+        "counts_toward_final_score": False,
+        "confusion_weight": 0.42,
+        "score_weight": 0.0,
+    },
+    {
+        "keywords": ("취하",),
+        "normalized": "취하",
+        "category": "historical_references",
+        "survival_label": "역사적 참고자료",
+        "counts_toward_final_score": False,
+        "confusion_weight": 0.4,
+        "score_weight": 0.0,
+    },
+    {
+        "keywords": ("소멸", "만료"),
+        "normalized": "소멸",
+        "category": "historical_references",
+        "survival_label": "역사적 참고자료",
+        "counts_toward_final_score": False,
+        "confusion_weight": 0.38,
+        "score_weight": 0.0,
+    },
+    {
+        "keywords": ("무효",),
+        "normalized": "무효",
+        "category": "historical_references",
+        "survival_label": "역사적 참고자료",
+        "counts_toward_final_score": False,
+        "confusion_weight": 0.38,
+        "score_weight": 0.0,
+    },
+)
+REFUSAL_BASIS_KEYWORDS = {
+    "외관": "외관",
+    "호칭": "호칭",
+    "칭호": "호칭",
+    "관념": "관념",
+    "식별력": "식별력",
+    "기술": "기술적 표장 여부",
+    "성질표시": "기술적 표장 여부",
 }
 
 
@@ -90,12 +178,35 @@ def _tokenize(text: str) -> list[str]:
     return [token for token in tokens if len(token) >= 2]
 
 
-def _status_weight(status: str) -> float:
-    text = strip_html(status)
-    for key, weight in STATUS_WEIGHT.items():
-        if key in text:
-            return weight
-    return 0.55
+def _split_values(value: object) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        text = strip_html(value)
+        if not text:
+            return []
+        parts = re.split(r"[,/;|·\n]+", text)
+        return [part.strip(" []()\"'") for part in parts if part.strip(" []()\"'")]
+    if isinstance(value, Iterable):
+        merged: list[str] = []
+        for item in value:
+            merged.extend(_split_values(item))
+        return _dedupe_preserve(merged)
+    return [strip_html(str(value))]
+
+
+def _dedupe_preserve(values: Iterable[str]) -> list[str]:
+    seen = set()
+    items: list[str] = []
+    for value in values:
+        if not value:
+            continue
+        normalized = value.strip()
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        items.append(normalized)
+    return items
 
 
 def _is_sales_code(code: str) -> bool:
@@ -167,6 +278,9 @@ def _mark_similarity(appearance: int, phonetic: int, conceptual: int, trademark_
 def _selected_classes(selected_classes: Iterable[int | str], selected_fields: Iterable[dict]) -> list[str]:
     classes = _extract_classes(selected_classes)
     for field in selected_fields:
+        for class_no in _extract_classes(field.get("nice_classes", [])):
+            if class_no not in classes:
+                classes.append(class_no)
         class_no = _clean_class_text(field.get("class_no", field.get("류", "")))
         if class_no and class_no not in classes:
             classes.append(class_no)
@@ -179,25 +293,30 @@ def _selected_context(
     selected_fields: Iterable[dict],
     specific_product: str,
 ) -> dict:
-    class_list = _selected_classes(selected_classes, selected_fields)
-    codes = [code for code in selected_codes if str(code).strip()]
+    selected_fields = list(selected_fields or [])
+    selected_kind = selected_fields[0].get("kind") if selected_fields else None
+    normalized = normalize_selected_input(
+        selected_kind=selected_kind,
+        selected_classes=selected_classes,
+        selected_codes=selected_codes,
+        selected_fields=selected_fields,
+        specific_product_text=specific_product,
+    )
+    codes = normalized["selected_similarity_codes"]
     code_meta = [get_code_metadata(code) for code in codes]
     code_meta = [row for row in code_meta if row]
-    text_fragments = [specific_product]
-    text_fragments.extend(field.get("description", field.get("설명", "")) for field in selected_fields)
-    text_fragments.extend(field.get("example", field.get("예시", "")) for field in selected_fields)
-    text_fragments.extend(row.get("name", "") for row in code_meta)
-    text_fragments.extend(row.get("설명", "") for row in code_meta)
-    return {
-        "classes": class_list,
-        "codes": codes,
-        "goods_codes": [code for code in codes if not _is_sales_code(code)],
-        "sales_codes": [code for code in codes if _is_sales_code(code)],
-        "code_meta": code_meta,
-        "tokens": set(token for fragment in text_fragments for token in _tokenize(fragment)),
-        "specific_product": specific_product,
-        "field_labels": [field.get("description", field.get("설명", "")) for field in selected_fields],
-    }
+    normalized.update(
+        {
+            "classes": [str(class_no) for class_no in normalized["selected_nice_classes"]],
+            "codes": codes,
+            "goods_codes": [code for code in codes if not _is_sales_code(code)],
+            "sales_codes": [code for code in codes if _is_sales_code(code)],
+            "code_meta": code_meta,
+            "specific_product": specific_product,
+            "field_labels": [field.get("description", field.get("설명", "")) for field in selected_fields],
+        }
+    )
+    return normalized
 
 
 def _distinctiveness_analysis(
@@ -266,23 +385,112 @@ def _distinctiveness_analysis(
         "summary": reasons[0] if reasons else "식별력상 특별한 약점은 크지 않습니다.",
     }
 
+def _status_profile(status: str) -> dict:
+    return get_status_profile(status)
+
+
+def _mark_identity(source: str, target: str) -> str:
+    return "exact" if _compact(source) == _compact(target) else "similar"
+
+
+def _extract_basis_from_text(text: str) -> list[str]:
+    found = []
+    for keyword, label in REFUSAL_BASIS_KEYWORDS.items():
+        if keyword in text:
+            found.append(label)
+    return _dedupe_preserve(found)
+
+
+def _similarity_against_marks(trademark_name: str, marks: Iterable[str]) -> int:
+    current = strip_html(trademark_name)
+    scores = [similarity_percent(current, mark) for mark in marks if strip_html(mark)]
+    return max(scores) if scores else 0
+
+
+def _infer_relevance(
+    trademark_name: str,
+    refusal_core: str,
+    cited_marks: list[str],
+    weak_elements: list[str],
+    text: str,
+) -> str:
+    current = strip_html(trademark_name)
+    direct_candidates = [refusal_core] if refusal_core else []
+    direct_candidates.extend(cited_marks)
+    direct_score = _similarity_against_marks(current, direct_candidates)
+
+    if refusal_core:
+        direct_score = max(
+            direct_score,
+            similarity_percent(current, refusal_core),
+            _phonetic_similarity_percent(current, refusal_core),
+        )
+
+    if direct_score >= 85:
+        return "high"
+    if direct_score >= 70:
+        return "medium"
+
+    weak_overlap = any(_normalize(element) and _normalize(element) in _normalize(current) for element in weak_elements)
+    if weak_overlap and not refusal_core:
+        return "medium"
+    if weak_overlap:
+        return "low"
+    if text and _normalize(current) and _normalize(current) in _normalize(text):
+        return "medium"
+    return "low"
+
+
+def _normalize_refusal_analysis(item: dict, trademark_name: str) -> dict:
+    return normalize_refusal_analysis_payload(
+        item=item,
+        trademark_name=trademark_name,
+        similarity_percent=similarity_percent,
+        phonetic_similarity_percent=_phonetic_similarity_percent,
+    )
+
+
+def _merge_refusal_analysis(current: dict, new: dict) -> dict:
+    return merge_refusal_analysis_payload(current, new)
+
 
 def _normalize_prior_item(item: dict, trademark_name: str) -> dict:
     name = strip_html(item.get("trademarkName", item.get("trademark_name", "알 수 없음")))
     classes = _extract_classes(item.get("classificationCode", item.get("class", "")))
     queried_codes = [code for code in item.get("queried_codes", []) if str(code).strip()]
+    status_profile = _status_profile(
+        item.get("registerStatus", item.get("registrationStatus", item.get("status", "-")))
+    )
+    refusal_analysis = _normalize_refusal_analysis(item, trademark_name)
     return {
         "trademarkName": name,
         "applicationNumber": item.get("applicationNumber", item.get("application_number", "-")),
         "applicationDate": item.get("applicationDate", item.get("application_date", "-")),
-        "registerStatus": item.get("registerStatus", item.get("registrationStatus", item.get("status", "-"))),
+        "registerStatus": status_profile["raw"] or item.get("registerStatus", item.get("registrationStatus", item.get("status", "-"))),
+        "status_normalized": status_profile["normalized"],
+        "survival_category": status_profile["category"],
+        "survival_label": status_profile["survival_label"],
+        "counts_toward_final_score": status_profile["counts_toward_final_score"],
+        "status_confusion_weight": status_profile["confusion_weight"],
+        "status_score_weight": status_profile["score_weight"],
         "applicantName": strip_html(item.get("applicantName", item.get("applicant", "-"))),
         "classificationCode": ",".join(classes) if classes else item.get("classificationCode", item.get("class", "-")),
         "classes": classes,
         "similarity": similarity_percent(trademark_name, name),
+        "mark_identity": _mark_identity(trademark_name, name),
         "queried_codes": queried_codes,
         "similarityGroupCode": item.get("similarityGroupCode") or item.get("similarGoodsCode") or "",
+        "reason_summary": refusal_analysis["reason_summary"],
+        "refusal_analysis": refusal_analysis,
     }
+
+
+def _status_rank(item: dict) -> tuple[int, float, float]:
+    return (
+        1 if item.get("counts_toward_final_score") else 0,
+        float(item.get("status_score_weight", 0.0)),
+        float(item.get("status_confusion_weight", 0.0)),
+    )
 
 
 def _merge_prior_items(items: List[dict], trademark_name: str) -> list[dict]:
@@ -294,15 +502,41 @@ def _merge_prior_items(items: List[dict], trademark_name: str) -> list[dict]:
         if current is None:
             merged[key] = normalized
             continue
+
         current_codes = set(current.get("queried_codes", []))
         current_codes.update(normalized.get("queried_codes", []))
         current["queried_codes"] = sorted(current_codes)
+
         current_classes = set(current.get("classes", []))
         current_classes.update(normalized.get("classes", []))
         current["classes"] = sorted(current_classes, key=int)
         current["classificationCode"] = ",".join(current["classes"]) if current["classes"] else current["classificationCode"]
         current["similarity"] = max(current["similarity"], normalized["similarity"])
-    return sorted(merged.values(), key=lambda row: row["similarity"], reverse=True)
+        current["mark_identity"] = "exact" if "exact" in {current["mark_identity"], normalized["mark_identity"]} else "similar"
+        current["refusal_analysis"] = _merge_refusal_analysis(current.get("refusal_analysis", {}), normalized["refusal_analysis"])
+        current["reason_summary"] = current["refusal_analysis"].get("reason_summary", "")
+        if not current.get("similarityGroupCode") and normalized.get("similarityGroupCode"):
+            current["similarityGroupCode"] = normalized["similarityGroupCode"]
+        if _status_rank(normalized) > _status_rank(current):
+            for key_name in (
+                "registerStatus",
+                "status_normalized",
+                "survival_category",
+                "survival_label",
+                "counts_toward_final_score",
+                "status_confusion_weight",
+                "status_score_weight",
+            ):
+                current[key_name] = normalized[key_name]
+    return sorted(
+        merged.values(),
+        key=lambda row: (
+            1 if row["counts_toward_final_score"] else 0,
+            1 if row["mark_identity"] == "exact" else 0,
+            row["similarity"],
+        ),
+        reverse=True,
+    )
 
 
 def _has_economic_link(selected_classes: list[str], item_classes: list[str]) -> bool:
@@ -322,127 +556,81 @@ def _item_code_tokens(code: str) -> set[str]:
     fragments = [row.get("name", ""), row.get("설명", ""), row.get("기준상품", "")]
     return {token for fragment in fragments for token in _tokenize(fragment)}
 
-
 def _product_similarity(item: dict, context: dict) -> dict:
-    selected_classes = context["classes"]
-    selected_codes = context["codes"]
-    selected_goods_codes = context["goods_codes"]
-    item_classes = item.get("classes", [])
-    shared_classes = [class_no for class_no in item_classes if class_no in selected_classes]
-    explicit_code = item.get("similarityGroupCode", "")
-    code_match = explicit_code in selected_codes if explicit_code else False
-
-    if code_match:
-        if _is_sales_code(explicit_code):
-            return {
-                "bucket": "same_class",
-                "group": GROUP_ALIAS["same_class"],
-                "label": "동일 판매업 코드(제한 반영)",
-                "score": 36,
-                "penalty_weight": 0.48,
-                "strict_same_code": False,
-                "include": True,
-                "reason": f"선택 판매업 코드 {explicit_code}와 일치하지만 문서 기준에 따라 제한적으로만 반영합니다.",
-            }
-        return {
-            "bucket": "same_code",
-            "group": GROUP_ALIAS["same_code"],
-            "label": "동일 유사군코드",
-            "score": 95,
-            "penalty_weight": 1.7,
-            "strict_same_code": True,
-            "include": True,
-            "reason": f"선택 유사군코드 {explicit_code}와 직접 일치합니다.",
-        }
-
-    if shared_classes:
-        item_tokens = _item_code_tokens(explicit_code)
-        overlap_tokens = sorted(context["tokens"] & item_tokens)
-        if explicit_code and item_tokens and overlap_tokens and explicit_code not in selected_goods_codes:
-            return {
-                "bucket": "same_class",
-                "group": GROUP_ALIAS["same_class"],
-                "label": "동일 류 인접 상품군",
-                "score": 54,
-                "penalty_weight": 0.92,
-                "strict_same_code": False,
-                "include": True,
-                "reason": (
-                    f"동일 류이며 유사군코드는 다르지만 상품 문맥이 맞닿아 있어 보조 검토군으로 포함합니다: "
-                    + ", ".join(overlap_tokens[:3])
-                ),
-            }
-        return {
-            "bucket": "same_class",
-            "group": GROUP_ALIAS["same_class"],
-            "label": "동일 류 검토군",
-            "score": 40,
-            "penalty_weight": 0.68,
-            "strict_same_code": False,
-            "include": True,
-            "reason": (
-                f"선택 류 {', '.join(selected_classes)}와 선행상표 류 {', '.join(shared_classes)}가 겹치지만 "
-                "문서 기준상 동일 류만으로는 자동 충돌로 보지 않아 보조 검토군으로만 반영합니다."
-            ),
-        }
-
-    if _has_economic_link(selected_classes, item_classes):
-        return {
-            "bucket": "exception",
-            "group": GROUP_ALIAS["exception"],
-            "label": "타 류 예외군",
-            "score": 24,
-            "penalty_weight": 0.18,
-            "strict_same_code": False,
-            "include": True,
-            "reason": "다른 류이지만 판매업·서비스업 등 경제적 견련성이 있어 예외 검토군으로 남깁니다.",
-        }
-
+    product = classify_product_similarity(item, context)
     return {
-        "bucket": "excluded",
-        "group": GROUP_ALIAS["excluded"],
-        "label": "검토 제외",
-        "score": 0,
-        "penalty_weight": 0.0,
-        "strict_same_code": False,
-        "include": False,
-        "reason": "선택한 류·유사군코드와 직접적인 상품 관련성이 낮아 점수 반영에서 제외합니다.",
+        **product,
+        "group": GROUP_ALIAS[product["bucket"]],
     }
 
 
 def _enrich_mark_similarity(item: dict, trademark_name: str, trademark_type: str) -> dict:
-    appearance = item["similarity"]
-    phonetic = _phonetic_similarity_percent(trademark_name, item["trademarkName"])
-    conceptual = _concept_similarity_percent(trademark_name, item["trademarkName"])
-    mark_similarity = _mark_similarity(appearance, phonetic, conceptual, trademark_type)
+    if item.get("mark_identity") == "exact":
+        appearance = 100
+        phonetic = 100
+        conceptual = 100
+        mark_similarity = 100
+    else:
+        appearance = item["similarity"]
+        phonetic = _phonetic_similarity_percent(trademark_name, item["trademarkName"])
+        conceptual = _concept_similarity_percent(trademark_name, item["trademarkName"])
+        mark_similarity = _mark_similarity(appearance, phonetic, conceptual, trademark_type)
     return {
         **item,
         "appearance_similarity": appearance,
         "phonetic_similarity": phonetic,
         "conceptual_similarity": conceptual,
         "mark_similarity": mark_similarity,
+        "mark_identity_label": "완전 동일" if item.get("mark_identity") == "exact" else "유사",
     }
+
+
+def _score_reflection_note(item: dict) -> str:
+    refusal = item.get("refusal_analysis", {})
+    if item.get("counts_toward_final_score"):
+        return "최종 점수 반영"
+    if item.get("mark_identity") == "exact":
+        return "동일 표장이나 현재 생존 장애물은 아님"
+    if item.get("status_normalized") == "거절" and refusal.get("reason_summary"):
+        if refusal.get("directly_relevant"):
+            return "거절이유가 현재 상표와 직접 관련되어 보조 경고만 반영"
+        return "거절이유 분석 결과 현재 상표와 직접 관련 낮음"
+    return "참고만 하고 점수에는 직접 반영하지 않음"
 
 
 def _confusion_metrics(item: dict) -> dict:
     product_score = item["product_similarity_score"]
     mark_score = item["mark_similarity"]
-    status_weight = _status_weight(item["registerStatus"])
-    confusion_score = int(round((mark_score * 0.58 + product_score * 0.42) * (0.72 + status_weight * 0.28)))
+    base_confusion = int(round(mark_score * 0.62 + product_score * 0.38))
 
-    if confusion_score >= 82:
-        label = "높음"
-    elif confusion_score >= 65:
-        label = "중간"
-    elif confusion_score >= 45:
-        label = "낮음"
+    if item.get("counts_toward_final_score"):
+        confusion_score = int(round(base_confusion * (0.84 + item.get("status_confusion_weight", 0.0) * 0.16)))
     else:
-        label = "매우 낮음"
+        confusion_score = int(round(base_confusion * (0.48 + item.get("status_confusion_weight", 0.0) * 0.22)))
+
+    if item.get("mark_identity") == "exact" and item.get("product_bucket") == "same_code":
+        if item.get("counts_toward_final_score"):
+            confusion_score = max(confusion_score, 95)
+        else:
+            confusion_score = min(max(confusion_score, 62), 74)
+    elif item.get("mark_identity") == "exact" and item.get("counts_toward_final_score"):
+        confusion_score = max(confusion_score, 88)
+
+    if confusion_score >= 90:
+        label = "매우 높음"
+    elif confusion_score >= 75:
+        label = "높음"
+    elif confusion_score >= 60:
+        label = "중간"
+    else:
+        label = "낮음"
 
     return {
         **item,
-        "confusion_score": confusion_score,
+        "base_confusion_score": base_confusion,
+        "confusion_score": max(0, min(100, confusion_score)),
         "confusion_label": label,
+        "score_reflection_label": _score_reflection_note(item),
     }
 
 
@@ -472,23 +660,32 @@ def _score_from_analysis(
     if not is_coined and normalized in COMMON_WORDS:
         score -= 8
 
-    for item in candidates:
-        group_weight = item.get("product_penalty_weight", {
-            "same_code": 1.7,
-            "same_class": 1.4,
-            "exception": 0.22,
-        }.get(item["product_bucket"], 0.0))
+    live_candidates = [item for item in candidates if item.get("counts_toward_final_score")]
+    for item in live_candidates:
+        group_weight = item.get(
+            "product_penalty_weight",
+            {"same_code": 1.7, "same_class": 1.4, "exception": 0.22}.get(item["product_bucket"], 0.0),
+        )
+        identity_multiplier = 1.0
+        if item.get("mark_identity") == "exact":
+            identity_multiplier = 1.28
+            if item.get("product_bucket") == "same_code":
+                identity_multiplier = 1.42
         penalty = (
             item["mark_similarity"] / 100
             * item["product_similarity_score"] / 100
-            * _status_weight(item["registerStatus"])
+            * item.get("status_score_weight", 0.0)
             * 45
             * group_weight
+            * identity_multiplier
         )
         score -= penalty
 
     severe_conflict = any(
-        item["product_similarity_score"] >= 85 and item["mark_similarity"] >= 90 and item["confusion_score"] >= 88
+        item.get("counts_toward_final_score")
+        and item["product_similarity_score"] >= 85
+        and item["mark_similarity"] >= 90
+        and item["confusion_score"] >= 90
         for item in candidates
     )
     if not severe_conflict:
@@ -498,12 +695,8 @@ def _score_from_analysis(
 
 
 def _group_counts(bucket_counts: dict) -> dict:
-    return {
-        GROUP_ALIAS["same_code"]: bucket_counts.get("same_code", 0),
-        GROUP_ALIAS["same_class"]: bucket_counts.get("same_class", 0),
-        GROUP_ALIAS["exception"]: bucket_counts.get("exception", 0),
-        GROUP_ALIAS["excluded"]: bucket_counts.get("excluded", 0),
-    }
+    scope_counts = build_scope_counts(bucket_counts)
+    return {SCOPE_GROUP_LABELS[key]: scope_counts[key] for key in scope_counts}
 
 
 def _grouped_priors(included: list[dict], excluded: list[dict]) -> dict:
@@ -527,6 +720,26 @@ def _build_exclusion_summary(excluded: list[dict]) -> str:
     )
 
 
+def _build_reference_summary(historical_references: list[dict]) -> str:
+    if not historical_references:
+        return "역사적 참고자료는 확인되지 않았습니다."
+    exact_historical = [
+        item
+        for item in historical_references
+        if item.get("mark_identity") == "exact"
+    ]
+    directly_relevant = [
+        item
+        for item in historical_references
+        if item.get("refusal_analysis", {}).get("directly_relevant")
+    ]
+    messages = [f"역사적 참고자료 {len(historical_references)}건은 후보 카드에 표시하되 최종 점수에는 직접 반영하지 않았습니다."]
+    if exact_historical:
+        messages.append("완전 동일한 선행상표가 있으나 현재 상태가 거절/취하/포기/소멸인 경우, 원칙적으로 직접 장애물로 보지 않고 참고자료로만 봅니다.")
+    if directly_relevant:
+        messages.append("거절 상표는 거절이유의 핵심이 현재 상표와 직접 관련되는 경우에만 보조 경고로 반영합니다.")
+    return " ".join(messages)
+
 def _calibrate_score(
     raw_score: int,
     included: list[dict],
@@ -534,57 +747,72 @@ def _calibrate_score(
     is_coined: bool,
 ) -> tuple[int, list[str]]:
     explanations = []
-    filtered_count = len(included)
-    actual_risk_count = sum(1 for item in included if item.get("confusion_score", 0) >= 65)
+    live_blockers = [item for item in included if item.get("counts_toward_final_score")]
+    historical_references = [item for item in included if not item.get("counts_toward_final_score")]
+    actual_risk_count = sum(1 for item in live_blockers if item.get("confusion_score", 0) >= 65)
+    exact_live_same_code = [
+        item
+        for item in live_blockers
+        if item.get("product_bucket") == "same_code" and item.get("mark_identity") == "exact"
+    ]
     same_code_high = [
         item
-        for item in included
+        for item in live_blockers
         if item.get("product_bucket") == "same_code"
-        and item.get("strict_same_code", False)
         and max(item.get("mark_similarity", 0), item.get("phonetic_similarity", 0)) >= 85
     ]
     same_class_medium = [
         item
-        for item in included
+        for item in live_blockers
         if item.get("product_bucket") == "same_class"
         and item.get("product_similarity_score", 0) >= 40
         and item.get("mark_similarity", 0) >= 70
     ]
-    related_only = bool(included) and all(item.get("product_bucket") == "exception" for item in included)
+    related_only = bool(live_blockers) and all(item.get("product_bucket") == "exception" for item in live_blockers)
 
     calibrated = raw_score
 
-    if filtered_count == 0:
+    if not live_blockers:
         if distinctiveness["level"] == "high":
             low, high = 60, 72
-            explanations.append("식별력 자체가 강하게 약해 충돌 후보가 없어도 60~72 구간에서 점수를 형성했습니다.")
+            explanations.append("식별력 자체가 강하게 약해 실질 장애물이 없어도 60~72 구간에서 점수를 형성했습니다.")
         elif distinctiveness["level"] == "medium":
             low, high = 72, 82
-            explanations.append("식별력 약함은 있으나 상품 유사성 필터 통과 선행상표가 없어 72~82 구간으로 보정했습니다.")
+            explanations.append("식별력 약함은 있으나 실질 장애물 선행상표가 없어 72~82 구간으로 보정했습니다.")
         elif is_coined:
             low, high = 88, 95
-            explanations.append("조어상표이고 상품 유사성 필터 통과 선행상표가 0건이어서 88~95 구간으로 캘리브레이션했습니다.")
+            explanations.append("조어상표이고 실질 장애물 선행상표가 0건이어서 88~95 구간으로 캘리브레이션했습니다.")
         else:
             low, high = 82, 90
-            explanations.append("식별력 보통 이상이며 상품 유사성 필터 통과 선행상표가 0건이어서 82~90 구간으로 캘리브레이션했습니다.")
+            explanations.append("식별력 보통 이상이며 실질 장애물 선행상표가 0건이어서 82~90 구간으로 캘리브레이션했습니다.")
         calibrated = min(max(calibrated, low), high)
+        if historical_references:
+            explanations.append(_build_reference_summary(historical_references))
         return calibrated, explanations
 
-    if same_code_high:
-        calibrated = min(calibrated, 48)
-        explanations.append("동일 유사군코드에서 호칭/표장 유사도가 높은 충돌 후보가 있어 50 이하 구간까지 낮췄습니다.")
+    if exact_live_same_code:
+        calibrated = min(calibrated, 18)
+        explanations.append("등록 또는 출원 상태의 동일 표장이 동일 유사군코드에서 확인되어 최고 위험군으로 반영했습니다.")
+    elif same_code_high:
+        calibrated = min(calibrated, 45)
+        explanations.append("동일 유사군코드에서 호칭/표장 유사도가 높은 실질 장애물이 있어 점수를 강하게 낮췄습니다.")
     elif same_class_medium:
-        calibrated = min(max(calibrated, 55), 75)
-        explanations.append("동일 류 보조 검토군에서 표장 유사도가 중간 이상이라 55~75 구간의 중간 리스크로 보정했습니다.")
+        calibrated = min(max(calibrated, 40), 75)
+        explanations.append("동일 류 보조 검토군에서 실질 장애물 후보의 표장 유사도가 중간 이상이라 40~75 구간의 리스크로 보정했습니다.")
     elif related_only:
         lower_bound = 60 if distinctiveness["level"] == "high" else 70
         calibrated = max(calibrated, lower_bound)
-        explanations.append("타 류 예외군만 존재해 원칙적으로 과도한 감점을 막고 보조 경고 수준으로 유지했습니다.")
+        explanations.append("타 류 예외군 실질 장애물만 존재해 과도한 감점을 막고 보조 경고 수준으로 유지했습니다.")
 
-    if filtered_count and actual_risk_count == 0:
-        explanations.append("필터 통과 후보는 있으나 실제 충돌 위험도는 낮아 점수 하락을 제한했습니다.")
-    elif actual_risk_count:
-        explanations.append(f"상품 유사성 필터 통과 후보 {filtered_count}건 중 실제 충돌 위험 후보는 {actual_risk_count}건입니다.")
+    explanations.append(
+        f"상품 유사성 필터 통과 후보 {len(included)}건 중 최종 점수에 직접 반영한 실질 장애물은 {len(live_blockers)}건입니다."
+    )
+    if historical_references:
+        explanations.append(_build_reference_summary(historical_references))
+    if actual_risk_count:
+        explanations.append(f"실질 장애물 {len(live_blockers)}건 중 실제 충돌 위험 후보는 {actual_risk_count}건입니다.")
+    else:
+        explanations.append("실질 장애물 후보는 있으나 실제 충돌 위험도는 제한적으로 평가했습니다.")
 
     return calibrated, explanations
 
@@ -607,12 +835,18 @@ def calculate_score(
     for item in results:
         if item.get("product_bucket") == "excluded":
             continue
+        status_profile = _status_profile(item.get("registerStatus", ""))
         enriched = {
             **item,
+            "counts_toward_final_score": item.get(
+                "counts_toward_final_score", status_profile["counts_toward_final_score"]
+            ),
+            "status_score_weight": item.get("status_score_weight", status_profile["score_weight"]),
             "mark_similarity": item.get("mark_similarity", item.get("similarity", 0)),
             "product_similarity_score": item.get("product_similarity_score", 62),
             "confusion_score": item.get("confusion_score", item.get("similarity", 0)),
             "product_bucket": item.get("product_bucket", "same_class"),
+            "mark_identity": item.get("mark_identity", "similar"),
         }
         candidates.append(enriched)
     return _score_from_analysis(trademark_name, candidates, distinctiveness, is_coined, trademark_type)
@@ -661,6 +895,8 @@ def evaluate_registration(
         payload = {
             **item,
             "product_bucket": product["bucket"],
+            "scope_bucket": product["scope_bucket"],
+            "scope_bucket_label": product["scope_bucket_label"],
             "group_name": product["group"],
             "product_similarity_label": product["label"],
             "product_similarity_score": product["score"],
@@ -675,21 +911,55 @@ def evaluate_registration(
         enriched = _enrich_mark_similarity(payload, trademark_name, trademark_type)
         included.append(_confusion_metrics(enriched))
 
-    included.sort(key=lambda row: (row["confusion_score"], row["mark_similarity"], row["similarity"]), reverse=True)
-    excluded.sort(key=lambda row: row["similarity"], reverse=True)
+    included.sort(
+        key=lambda row: (
+            1 if row.get("counts_toward_final_score") else 0,
+            1 if row.get("mark_identity") == "exact" else 0,
+            row.get("confusion_score", 0),
+            row.get("product_similarity_score", 0),
+            1 if row.get("refusal_analysis", {}).get("directly_relevant") else 0,
+            row.get("mark_similarity", 0),
+            row.get("similarity", 0),
+        ),
+        reverse=True,
+    )
+    excluded.sort(
+        key=lambda row: (
+            1 if row.get("mark_identity") == "exact" else 0,
+            row.get("similarity", 0),
+        ),
+        reverse=True,
+    )
+
+    live_blockers = [item for item in included if item.get("counts_toward_final_score")]
+    historical_references = [item for item in included if not item.get("counts_toward_final_score")]
+    reference_warnings = [
+        item
+        for item in historical_references
+        if item.get("refusal_analysis", {}).get("directly_relevant")
+    ]
 
     raw_score = _score_from_analysis(trademark_name, included, distinctiveness, is_coined, trademark_type)
     score, calibration_notes = _calibrate_score(raw_score, included, distinctiveness, is_coined)
     band = get_score_band(score)
     grouped_counts = _group_counts(bucket_counts)
-    actual_risk_count = sum(1 for item in included if item.get("confusion_score", 0) >= 65)
+    scope_counts = build_scope_counts(bucket_counts)
+    actual_risk_count = sum(1 for item in live_blockers if item.get("confusion_score", 0) >= 65)
     exclusion_reason_summary = _build_exclusion_summary(excluded)
+    reference_summary = _build_reference_summary(historical_references)
 
-    if included:
-        top = included[0]
+    if live_blockers:
+        top = live_blockers[0]
         confusion_summary = (
             f"가장 주의할 선행상표는 '{top['trademarkName']}'이며 "
-            f"{top['product_similarity_label']} + 표장 유사도 {top['mark_similarity']}%로 혼동 위험이 {top['confusion_label']}입니다."
+            f"{top['survival_label']}로서 표장 유사도 {top['mark_similarity']}%, "
+            f"상품 유사도 {top['product_similarity_score']}%, 상태 반영 후 혼동위험 {top['confusion_score']}%입니다."
+        )
+    elif historical_references:
+        top = historical_references[0]
+        confusion_summary = (
+            f"상품 유사성 필터를 통과한 후보는 있으나 현재는 '{top['trademarkName']}' 같은 "
+            f"{top['survival_label']}만 확인되어 최종 점수에는 직접 반영하지 않았습니다."
         )
     else:
         confusion_summary = "상품 유사성 필터를 통과한 선행상표가 없어 상대적 거절사유 리스크는 낮게 평가됩니다."
@@ -697,16 +967,17 @@ def evaluate_registration(
     signals = [distinctiveness["summary"]]
     signals.append(
         "상품 유사성 필터 결과: "
-        f"동일 코드 {bucket_counts['same_code']}건, "
-        f"동일 류 {bucket_counts['same_class']}건, "
-        f"예외군 {bucket_counts['exception']}건, "
-        f"제외 {bucket_counts['excluded']}건"
+        f"실질 충돌 후보 {scope_counts['exact_scope_candidates']}건, "
+        f"동일 니스류 보조 검토군 {scope_counts['same_class_candidates']}건, "
+        f"상품-서비스업 예외 검토군 {scope_counts['related_market_candidates']}건, "
+        f"제외 후보 {scope_counts['irrelevant_candidates']}건"
     )
+    signals.append(f"실질 장애물 {len(live_blockers)}건 / 역사적 참고자료 {len(historical_references)}건")
     if included:
         top = included[0]
         signals.append(
-            f"표장 유사도 상위 충돌 후보는 '{top['trademarkName']}'로 "
-            f"외관 {top['appearance_similarity']}%, 호칭 {top['phonetic_similarity']}%, 관념 {top['conceptual_similarity']}%입니다."
+            f"상위 후보 '{top['trademarkName']}'는 표장 유사도 {top['mark_similarity']}%, "
+            f"상품 유사도 {top['product_similarity_score']}%, 상태 반영 후 혼동위험 {top['confusion_score']}%입니다."
         )
     else:
         signals.append("상품 관련성이 없는 타 류 후보는 강한 감점에 반영하지 않았습니다.")
@@ -720,33 +991,54 @@ def evaluate_registration(
         "top_prior": included[:5],
         "included_priors": included,
         "excluded_priors": excluded[:10],
+        "live_blockers": live_blockers[:10],
+        "historical_references": historical_references[:10],
+        "reference_warnings": reference_warnings[:10],
         "prior_count": len(included),
         "filtered_prior_count": len(included),
+        "direct_score_prior_count": len(live_blockers),
+        "historical_reference_count": len(historical_references),
+        "reference_warning_count": len(reference_warnings),
         "excluded_prior_count": len(excluded),
         "actual_risk_prior_count": actual_risk_count,
         "total_prior_count": len(normalized_priors),
+        "selected_kind": context.get("selected_kind"),
+        "selected_groups": context.get("selected_groups", []),
+        "selected_subgroups": context.get("selected_subgroups", []),
+        "selected_nice_classes": context.get("selected_nice_classes", []),
+        "selected_similarity_codes": context.get("selected_similarity_codes", []),
+        "selected_keywords": context.get("selected_keywords", []),
+        "specific_product_text": context.get("specific_product_text", specific_product),
         "group_counts": grouped_counts,
+        "scope_counts": scope_counts,
         "grouped_priors": _grouped_priors(included[:20], excluded[:20]),
         "exclusion_reason_summary": exclusion_reason_summary,
+        "reference_summary": reference_summary,
         "distinctiveness": distinctiveness["label"],
         "distinctiveness_analysis": distinctiveness,
         "product_similarity_analysis": {
             "summary": (
                 f"선행상표 {len(normalized_priors)}건 중 "
-                f"동일 유사군코드 {bucket_counts['same_code']}건, "
-                f"동일 류 {bucket_counts['same_class']}건, "
-                f"타 류 예외군 {bucket_counts['exception']}건만 본격 검토하고 "
-                f"{bucket_counts['excluded']}건은 감점에서 제외했습니다."
+                f"실질 충돌 후보 {scope_counts['exact_scope_candidates']}건, "
+                f"동일 니스류 보조 검토군 {scope_counts['same_class_candidates']}건, "
+                f"상품-서비스업 예외 검토군 {scope_counts['related_market_candidates']}건만 본격 검토했고 "
+                f"제외 후보 {scope_counts['irrelevant_candidates']}건은 감점에서 제외했습니다. "
+                f"이 중 실질 장애물 {len(live_blockers)}건, 역사적 참고자료 {len(historical_references)}건입니다."
             ),
             "bucket_counts": bucket_counts,
+            "scope_counts": scope_counts,
             "group_counts": grouped_counts,
             "filtered_prior_count": len(included),
+            "direct_score_prior_count": len(live_blockers),
+            "historical_reference_count": len(historical_references),
             "excluded_prior_count": len(excluded),
             "exclusion_reason_summary": exclusion_reason_summary,
+            "reference_summary": reference_summary,
         },
         "mark_similarity_analysis": {
             "summary": (
-                f"표장 유사도는 상품 유사성 필터를 통과한 {len(included)}건에 대해서만 산출했습니다."
+                f"표장 유사도는 기존 발음·호칭·외관·관념·문자열 로직을 유지하되, 상품 유사성 필터를 통과한 {len(included)}건에 대해서만 강하게 반영했습니다. "
+                f"완전 동일 표장은 {sum(1 for item in included if item.get('mark_identity') == 'exact')}건입니다."
                 if included
                 else "상품 유사성 필터를 통과한 후보가 없어 외관·호칭·관념 유사도는 참고 수준으로만 보았습니다."
             ),
@@ -756,9 +1048,11 @@ def evaluate_registration(
             "summary": confusion_summary,
             "highest_confusion_score": included[0]["confusion_score"] if included else 0,
             "actual_risk_prior_count": actual_risk_count,
+            "direct_score_prior_count": len(live_blockers),
+            "historical_reference_count": len(historical_references),
         },
         "score_explanation": {
-            "summary": " / ".join(calibration_notes) if calibration_notes else "상품 유사성 필터와 식별력 축을 분리해 점수를 산정했습니다.",
+            "summary": " / ".join(calibration_notes) if calibration_notes else "최종 점수는 실질 장애물만 직접 반영했습니다.",
             "raw_score": raw_score,
             "final_score": score,
             "notes": calibration_notes,

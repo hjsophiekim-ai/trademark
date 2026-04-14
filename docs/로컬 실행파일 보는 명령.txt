@@ -1,0 +1,10 @@
+로컬 실행파일 보는 명령
+cd "$HOME\Desktop\trademark"
+
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+
+python -m pip install --upgrade pip
+pip install streamlit requests python-dotenv fpdf2
+
+python -m streamlit run trademark_checker/app.py

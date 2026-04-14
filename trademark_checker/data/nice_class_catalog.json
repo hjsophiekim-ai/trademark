@@ -1,0 +1,272 @@
+[
+  {
+    "nice_class_no": 1,
+    "kind": "goods",
+    "nice_class_label": "제1류",
+    "class_heading": "공업용·과학용·농업용 화학품, 비료, 조성물"
+  },
+  {
+    "nice_class_no": 2,
+    "kind": "goods",
+    "nice_class_label": "제2류",
+    "class_heading": "페인트, 바니시, 도료, 안료, 방청제"
+  },
+  {
+    "nice_class_no": 3,
+    "kind": "goods",
+    "nice_class_label": "제3류",
+    "class_heading": "화장품, 세제, 세탁용 제제, 향료, 방향제"
+  },
+  {
+    "nice_class_no": 4,
+    "kind": "goods",
+    "nice_class_label": "제4류",
+    "class_heading": "산업용 오일, 윤활유, 연료, 왁스, 촛불"
+  },
+  {
+    "nice_class_no": 5,
+    "kind": "goods",
+    "nice_class_label": "제5류",
+    "class_heading": "약제, 의료용 제제, 건강기능식품, 위생용품"
+  },
+  {
+    "nice_class_no": 6,
+    "kind": "goods",
+    "nice_class_label": "제6류",
+    "class_heading": "일반금속 및 그 합금, 금속제 건축재료, 철물"
+  },
+  {
+    "nice_class_no": 7,
+    "kind": "goods",
+    "nice_class_label": "제7류",
+    "class_heading": "기계, 모터, 엔진, 산업장비"
+  },
+  {
+    "nice_class_no": 8,
+    "kind": "goods",
+    "nice_class_label": "제8류",
+    "class_heading": "수공구, 절삭도구, 면도기"
+  },
+  {
+    "nice_class_no": 9,
+    "kind": "goods",
+    "nice_class_label": "제9류",
+    "class_heading": "전자기기, 소프트웨어, 컴퓨터, 카메라, 측정기기"
+  },
+  {
+    "nice_class_no": 10,
+    "kind": "goods",
+    "nice_class_label": "제10류",
+    "class_heading": "의료기기, 진단기기, 수술기구"
+  },
+  {
+    "nice_class_no": 11,
+    "kind": "goods",
+    "nice_class_label": "제11류",
+    "class_heading": "조명기구, 난방기구, 조리기구, 위생설비"
+  },
+  {
+    "nice_class_no": 12,
+    "kind": "goods",
+    "nice_class_label": "제12류",
+    "class_heading": "자동차, 이동수단, 운송기기 및 부품"
+  },
+  {
+    "nice_class_no": 13,
+    "kind": "goods",
+    "nice_class_label": "제13류",
+    "class_heading": "화기, 폭발물, 불꽃놀이용품"
+  },
+  {
+    "nice_class_no": 14,
+    "kind": "goods",
+    "nice_class_label": "제14류",
+    "class_heading": "귀금속, 보석, 시계, 장신구"
+  },
+  {
+    "nice_class_no": 15,
+    "kind": "goods",
+    "nice_class_label": "제15류",
+    "class_heading": "악기 및 그 부속품"
+  },
+  {
+    "nice_class_no": 16,
+    "kind": "goods",
+    "nice_class_label": "제16류",
+    "class_heading": "종이, 문구, 인쇄물, 출판물, 포장재"
+  },
+  {
+    "nice_class_no": 17,
+    "kind": "goods",
+    "nice_class_label": "제17류",
+    "class_heading": "고무, 플라스틱, 절연재, 충전재"
+  },
+  {
+    "nice_class_no": 18,
+    "kind": "goods",
+    "nice_class_label": "제18류",
+    "class_heading": "가죽, 인조가죽, 가방, 지갑, 우산"
+  },
+  {
+    "nice_class_no": 19,
+    "kind": "goods",
+    "nice_class_label": "제19류",
+    "class_heading": "비금속 건축재료, 목재, 타일, 아스팔트"
+  },
+  {
+    "nice_class_no": 20,
+    "kind": "goods",
+    "nice_class_label": "제20류",
+    "class_heading": "가구, 거울, 액자, 비금속 용기"
+  },
+  {
+    "nice_class_no": 21,
+    "kind": "goods",
+    "nice_class_label": "제21류",
+    "class_heading": "주방용기구, 가정용품, 청소도구, 유리제품"
+  },
+  {
+    "nice_class_no": 22,
+    "kind": "goods",
+    "nice_class_label": "제22류",
+    "class_heading": "로프, 천막, 텐트, 포장용 섬유원료"
+  },
+  {
+    "nice_class_no": 23,
+    "kind": "goods",
+    "nice_class_label": "제23류",
+    "class_heading": "실, 원사, 재봉용 실"
+  },
+  {
+    "nice_class_no": 24,
+    "kind": "goods",
+    "nice_class_label": "제24류",
+    "class_heading": "직물, 침구, 커튼, 직물제 덮개"
+  },
+  {
+    "nice_class_no": 25,
+    "kind": "goods",
+    "nice_class_label": "제25류",
+    "class_heading": "의류, 신발, 모자"
+  },
+  {
+    "nice_class_no": 26,
+    "kind": "goods",
+    "nice_class_label": "제26류",
+    "class_heading": "레이스, 자수포, 리본, 단추, 장식품"
+  },
+  {
+    "nice_class_no": 27,
+    "kind": "goods",
+    "nice_class_label": "제27류",
+    "class_heading": "카펫, 매트, 벽지, 바닥재"
+  },
+  {
+    "nice_class_no": 28,
+    "kind": "goods",
+    "nice_class_label": "제28류",
+    "class_heading": "장난감, 게임기, 스포츠용품, 놀이용품"
+  },
+  {
+    "nice_class_no": 29,
+    "kind": "goods",
+    "nice_class_label": "제29류",
+    "class_heading": "육류, 수산물, 가공식품, 유제품"
+  },
+  {
+    "nice_class_no": 30,
+    "kind": "goods",
+    "nice_class_label": "제30류",
+    "class_heading": "커피, 차, 제과, 제빵, 조미료"
+  },
+  {
+    "nice_class_no": 31,
+    "kind": "goods",
+    "nice_class_label": "제31류",
+    "class_heading": "농산물, 곡물, 신선식품, 생화, 동물사료"
+  },
+  {
+    "nice_class_no": 32,
+    "kind": "goods",
+    "nice_class_label": "제32류",
+    "class_heading": "맥주, 무알코올 음료, 주스, 탄산음료"
+  },
+  {
+    "nice_class_no": 33,
+    "kind": "goods",
+    "nice_class_label": "제33류",
+    "class_heading": "알코올음료(맥주 제외)"
+  },
+  {
+    "nice_class_no": 34,
+    "kind": "goods",
+    "nice_class_label": "제34류",
+    "class_heading": "담배, 전자담배, 흡연용품"
+  },
+  {
+    "nice_class_no": 35,
+    "kind": "services",
+    "nice_class_label": "제35류",
+    "class_heading": "광고업, 사업관리업, 도소매업, 사무처리업"
+  },
+  {
+    "nice_class_no": 36,
+    "kind": "services",
+    "nice_class_label": "제36류",
+    "class_heading": "금융업, 보험업, 부동산업"
+  },
+  {
+    "nice_class_no": 37,
+    "kind": "services",
+    "nice_class_label": "제37류",
+    "class_heading": "건설업, 설치업, 수리업, 유지보수업"
+  },
+  {
+    "nice_class_no": 38,
+    "kind": "services",
+    "nice_class_label": "제38류",
+    "class_heading": "통신업, 데이터 전송업, 방송업"
+  },
+  {
+    "nice_class_no": 39,
+    "kind": "services",
+    "nice_class_label": "제39류",
+    "class_heading": "운송업, 물류업, 여행예약업, 창고업"
+  },
+  {
+    "nice_class_no": 40,
+    "kind": "services",
+    "nice_class_label": "제40류",
+    "class_heading": "재료처리업, 가공업, 맞춤제작업"
+  },
+  {
+    "nice_class_no": 41,
+    "kind": "services",
+    "nice_class_label": "제41류",
+    "class_heading": "교육업, 훈련업, 오락업, 문화활동업"
+  },
+  {
+    "nice_class_no": 42,
+    "kind": "services",
+    "nice_class_label": "제42류",
+    "class_heading": "과학기술 서비스업, 연구개발업, 소프트웨어 서비스업"
+  },
+  {
+    "nice_class_no": 43,
+    "kind": "services",
+    "nice_class_label": "제43류",
+    "class_heading": "음식점업, 카페업, 숙박업"
+  },
+  {
+    "nice_class_no": 44,
+    "kind": "services",
+    "nice_class_label": "제44류",
+    "class_heading": "의료업, 미용업, 동물관리업, 농업서비스업"
+  },
+  {
+    "nice_class_no": 45,
+    "kind": "services",
+    "nice_class_label": "제45류",
+    "class_heading": "법률업, 지식재산업, 보안업, 개인·사회서비스업"
+  }
+]

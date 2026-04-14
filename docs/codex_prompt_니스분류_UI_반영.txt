@@ -1,0 +1,164 @@
+작업 대상 repo:
+- 전체 repo
+- 특히 아래 파일과 신규 데이터 파일을 우선 확인/수정
+  - trademark_checker/app.py
+  - trademark_checker/search_mapper.py
+  - trademark_checker/similarity_code_db.py
+  - trademark_checker/scoring.py
+  - trademark_checker/improvement.py
+  - docs/상표_등록가능성_기본판단로직.md
+
+먼저 반드시 읽을 문서:
+- docs/상표_등록가능성_기본판단로직.md
+- docs/니스분류_기반_상품류_상품군_UI_설계.md
+-docs/지식재산처_상품분류_니스분류
+- 업로드된 니스분류 PDF 및 스크린샷 UX 참고자료
+
+이번 작업의 목표:
+현재 프로그램의 상품류/상품군 선택 구조가 니스분류 기준으로 충분히 정리되어 있지 않다.
+이를 수정해서 사용자가 반드시 **니스분류 체계에 따라**
+1) 제품(제품, 브랜드) 또는 서비스(상호, 서비스)를 먼저 선택하고,
+2) 그에 맞는 분류 2(대분류)를 선택하고,
+3) 그 아래 상품군을 선택하면,
+4) 내부적으로는 실제 니스류 번호(제1류~제45류)와 연결되도록 만들어라.
+
+가장 중요한 원칙:
+- 이 프로젝트의 상품 입력 source of truth는 이제 니스분류다.
+- goods는 제1류~제34류, services는 제35류~제45류다.
+- 현재의 일부 하드코딩된 카테고리 구조를 유지하더라도, 내부 데이터는 반드시 니스류 기준으로 돌아가야 한다.
+- 사용자가 고른 니스류/상품군 값이 이후 상품 유사성 필터와 유사군코드 검토의 첫 입력값이 되어야 한다.
+
+반드시 구현할 구조:
+
+A. 데이터 구조 추가
+새 파일을 추가하라.
+- trademark_checker/data/nice_class_catalog.json
+- trademark_checker/data/nice_group_catalog.json
+- 필요하면 로더 파일 추가: trademark_checker/nice_catalog.py
+
+1) nice_class_catalog.json
+- 제1류~제45류 전체를 모두 포함
+- 각 항목은 최소 아래 필드를 가진다.
+  - nice_class_no
+  - kind: goods or services
+  - nice_class_label
+  - class_heading
+
+2) nice_group_catalog.json
+- goods/services 각각에 대해 분류 2 대분류와 하위 상품군을 정의
+- 각 분류 2 항목은 최소 아래 필드를 가진다.
+  - group_id
+  - group_label
+  - classes
+  - subgroups
+- 각 subgroup는 최소 아래 필드를 가진다.
+  - subgroup_id
+  - subgroup_label
+  - nice_classes
+  - keywords
+  - similarity_codes
+
+B. 니스분류 전체를 빠짐없이 반영
+- goods: 제1류~제34류 모두 데이터에 존재해야 한다
+- services: 제35류~제45류 모두 데이터에 존재해야 한다
+- 어떤 제류도 누락되면 안 된다
+- UI 대분류는 여러 클래스를 묶어 보여줄 수 있지만, 내부 클래스 정보는 반드시 유지해야 한다
+
+C. Step 2 UI 개편
+현재 상품 선택 화면을 아래 구조로 변경하라.
+
+1. 분류 1 선택
+- 제품(제품, 브랜드)
+- 서비스(상호, 서비스)
+
+2. 분류 2 표시
+- 분류 1이 goods면 goods용 대분류 버튼 표시
+- 분류 1이 services면 services용 대분류 버튼 표시
+
+3. 상품군 표시
+- 분류 2 선택 시 해당 subgroup 버튼 목록 표시
+
+4. 선택 결과 저장
+- selected_kind
+- selected_group
+- selected_subgroups
+- selected_nice_classes
+- selected_similarity_codes
+- selected_keywords
+
+5. 다중 선택 지원
+- 상품군은 여러 개 선택 가능하게 한다
+- 중복 클래스는 자동 dedupe 한다
+
+D. UX 요구사항
+스크린샷에서 보인 UX 의도를 최대한 살려라.
+- 제품/서비스를 먼저 고르게 한다
+- 분류 2는 사용자 친화적 카테고리로 보여준다
+- 하위 상품군 버튼을 보여준다
+- 상품군 선택 후 다음 버튼이 활성화된다
+- 선택한 상품군에 연결된 실제 니스류를 요약해서 보여준다
+예:
+- 선택 상품군: 세탁/청소용품, 방향/탈취제
+- 연결 니스류: 제3류, 제21류
+
+E. 기존 로직과의 연결
+기존 search_mapper.py와 similarity_code_db.py 로직은 완전히 버리지 마라.
+대신 우선순위를 아래처럼 바꿔라.
+1. 사용자가 명시적으로 선택한 니스류/상품군
+2. 선택 상품군의 keywords / similarity_codes
+3. 기존 자유검색 매핑
+4. 기존 alias 추천
+
+즉, 사용자가 UI에서 니스분류 기반으로 선택한 값이 제일 강한 입력값이어야 한다.
+
+F. 분석엔진과 연결
+이 UI 변경은 이후 분석로직에 직접 연결되어야 한다.
+따라서 아래를 보장하라.
+- selected_nice_classes -> 상품 유사성 1차 필터
+- selected_subgroups -> 구체 상품군 문맥
+- selected_similarity_codes -> 유사군코드 기반 필터
+- selected_kind -> goods/services 구분
+
+G. 문서 업데이트
+다음 문서를 반드시 업데이트하라.
+1) docs/상표_등록가능성_기본판단로직.md
+추가할 내용:
+- 상품 선택 입력은 니스분류 기준
+- goods는 제1류~제34류
+- services는 제35류~제45류
+- 분류 1 / 분류 2 / 상품군은 UX 레이어
+- 실제 저장과 판단은 니스류 번호 기준
+- 상품 유사성 필터는 사용자가 선택한 니스류와 유사군코드로 시작
+
+2) 새 문서 추가
+- docs/니스분류_기반_상품류_상품군_UI_설계.md
+- 이 문서를 source of truth로 사용
+
+H. 테스트 및 검증
+아래를 검증하라.
+1. 제품 선택 시 goods 대분류만 보인다
+2. 서비스 선택 시 services 대분류만 보인다
+3. 각 대분류 아래에 상품군이 노출된다
+4. 모든 니스류가 데이터에 존재한다
+5. 상품군 선택 결과가 실제 니스류 번호로 저장된다
+6. 다음 단계 분석에서 이 값이 사용된다
+
+I. 절대 금지
+- 일부 카테고리만 남기고 니스류 누락 금지
+- UI용 대분류만 저장하고 실제 제류 번호를 버리는 구조 금지
+- 사용자가 선택한 니스류보다 자유검색 추천이 우선되는 구조 금지
+- goods/services를 섞어서 저장하는 구조 금지
+
+최종 산출물:
+1. 신규 데이터 파일
+2. 수정된 UI
+3. 수정된 문서
+4. 변경 요약
+5. 모든 니스류가 들어갔는지 검증 결과
+6. 사용자가 선택한 분류가 이후 분석에 어떻게 연결되는지 설명
+
+작업을 시작하라.
+먼저 문서를 읽고,
+그 다음 니스분류 전체 데이터 구조를 만들고,
+UI를 제품/서비스 -> 대분류 -> 상품군 구조로 바꾸고,
+마지막에 변경 파일 목록과 검증 결과를 자세히 출력하라.
