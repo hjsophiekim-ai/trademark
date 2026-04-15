@@ -46,6 +46,7 @@ def _subgroup_payload(subgroup: dict, match_score: float = 0.0, matched_keyword:
         "group_id": subgroup["group_id"],
         "group_label": subgroup["group_label"],
         "group_icon": subgroup.get("group_icon", ""),
+        "group_heading": subgroup.get("group_heading", ""),
         "subgroup_id": subgroup["subgroup_id"],
         "subgroup_label": subgroup["subgroup_label"],
         "nice_classes": list(subgroup.get("nice_classes", [])),

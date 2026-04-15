@@ -130,7 +130,6 @@ def normalize_selected_input(
 def classify_product_similarity(item: dict, context: dict) -> dict:
     selected_classes = context["selected_nice_classes"]
     selected_codes = context["selected_similarity_codes"]
-    context_codes = set(selected_codes) | set(context.get("contextual_similarity_codes", []))
     selected_keywords = context["selected_keywords"]
     selected_kind = context.get("selected_kind")
     item_classes = [int(value) for value in item.get("classes", []) if str(value).strip()]
@@ -139,7 +138,7 @@ def classify_product_similarity(item: dict, context: dict) -> dict:
     similarity_hint = int(item.get("similarity", 0))
     mark_identity = item.get("mark_identity", "similar")
     item_kind = infer_kind_from_classes(item_classes)
-    code_match = bool(explicit_code) and explicit_code in context_codes
+    code_match = bool(explicit_code) and explicit_code in set(selected_codes)
 
     if code_match:
         return {
@@ -151,7 +150,7 @@ def classify_product_similarity(item: dict, context: dict) -> dict:
             "penalty_weight": 1.72,
             "strict_same_code": True,
             "include": True,
-            "reason": f"선택한 유사군코드 {explicit_code}와 직접 일치해 권리범위가 가장 가깝습니다.",
+            "reason": f"사용자가 선택한 유사군코드 {explicit_code}와 직접 일치해 권리범위가 가장 가깝습니다.",
         }
 
     if shared_classes:
@@ -162,23 +161,23 @@ def classify_product_similarity(item: dict, context: dict) -> dict:
                 "bucket": "same_class",
                 "scope_bucket": "same_class_candidates",
                 "scope_bucket_label": SCOPE_GROUP_LABELS["same_class_candidates"],
-                "label": "동일 니스류 + 인접 상품군",
+                "label": "동일 니스류 + 상품군 인접",
                 "score": 56,
                 "penalty_weight": 0.94,
                 "strict_same_code": False,
                 "include": True,
-                "reason": "동일 니스류이고 상품 문맥이 겹쳐 보조 검토군에 포함합니다: " + ", ".join(overlap_tokens[:3]),
+                "reason": "동일 니스류이고 상품군 문맥이 맞닿아 보조 검토군으로 포함합니다: " + ", ".join(overlap_tokens[:3]),
             }
         return {
             "bucket": "same_class",
             "scope_bucket": "same_class_candidates",
             "scope_bucket_label": SCOPE_GROUP_LABELS["same_class_candidates"],
-            "label": "동일 니스류 검토군",
+            "label": "동일 니스류 보조 검토",
             "score": 42,
             "penalty_weight": 0.7,
             "strict_same_code": False,
             "include": True,
-            "reason": "동일 니스류이지만 유사군코드는 다르므로 보조 검토군으로만 반영합니다.",
+            "reason": "동일 니스류이지만 유사군코드는 달라 보조 검토군으로만 반영합니다.",
         }
 
     cross_kind = cross_kind_exception(
@@ -186,7 +185,7 @@ def classify_product_similarity(item: dict, context: dict) -> dict:
         item_kind=item_kind,
         selected_classes=selected_classes,
         item_classes=item_classes,
-        selected_codes=context_codes,
+        selected_codes=selected_codes,
         item_code=explicit_code,
         selected_keywords=selected_keywords,
         similarity_hint=similarity_hint,
@@ -214,5 +213,5 @@ def classify_product_similarity(item: dict, context: dict) -> dict:
         "penalty_weight": 0.0,
         "strict_same_code": False,
         "include": False,
-        "reason": "선택한 니스류·상품군·유사군코드와 실질 관련성이 낮아 최종 점수에서는 제외합니다.",
+        "reason": "선택한 니스류·유사군코드·상품 문맥과 직접 관련성이 낮아 최종 점수에서 제외합니다.",
     }

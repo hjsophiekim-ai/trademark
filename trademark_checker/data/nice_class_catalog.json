@@ -1,272 +1,317 @@
 [
   {
+    "kind": "goods",
     "nice_class_no": 1,
-    "kind": "goods",
     "nice_class_label": "제1류",
-    "class_heading": "공업용·과학용·농업용 화학품, 비료, 조성물"
+    "class_heading": "공업/과학 및 사진용 및 농업/원예 및 임업용 화학제; 미가공 인조수지, 미가공 플라스틱; 소화 및 화재예방용 조성물; 조질제 및 땜납용 조제; 수피용 무두질제; 공업용 접착제; 퍼티 및 기타 페이스트 충전제; 퇴비, 거름, 비료; 산업용 및 과학용 생물학적 제제",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 2,
-    "kind": "goods",
     "nice_class_label": "제2류",
-    "class_heading": "페인트, 바니시, 도료, 안료, 방청제"
+    "class_heading": "페인트, 니스, 래커; 방청제 및 목재 보존제; 착색제, 염료; 인쇄, 표시 및 판화용 잉크; 미가공 천연수지; 도장용/장식용/인쇄용/미술용 금속박(箔) 및 금속분(紛)",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 3,
-    "kind": "goods",
     "nice_class_label": "제3류",
-    "class_heading": "화장품, 세제, 세탁용 제제, 향료, 방향제"
+    "class_heading": "비의료용 화장품 및 세면용품; 비의료용 치약; 향수; 표백제 및 기타 세탁용 제제; 세정/광택 및 연마재",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 4,
-    "kind": "goods",
     "nice_class_label": "제4류",
-    "class_heading": "산업용 오일, 윤활유, 연료, 왁스, 촛불"
+    "class_heading": "공업용 오일 및 그리스, 왁스; 윤활제; 먼지흡수제, 먼지습윤제 및 먼지흡착제; 연료 및 발광체; 조명용 양초 및 심지",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 5,
-    "kind": "goods",
     "nice_class_label": "제5류",
-    "class_heading": "약제, 의료용 제제, 건강기능식품, 위생용품"
+    "class_heading": "약제, 의료용 및 동물의료용 제제; 의료용 위생제; 의료용 또는 동물의료용 식이요법 식품 및 제제, 유아용 식품; 인체용 및 동물용 식이보충제; 반창고, 외상치료용 재료; 치과용 충전재료, 치과용 왁스; 소독제; 해충구제제; 살균제, 제초제",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 6,
-    "kind": "goods",
     "nice_class_label": "제6류",
-    "class_heading": "일반금속 및 그 합금, 금속제 건축재료, 철물"
+    "class_heading": "일반금속 및 그 합금, 광석; 금속제 건축 및 구축용 재료; 금속제 이동식 건축물; 비전기용 일반금속제 케이블 및 와이어; 소형금속제품; 저장 또는 운반용 금속제 용기; 금고",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 7,
-    "kind": "goods",
     "nice_class_label": "제7류",
-    "class_heading": "기계, 모터, 엔진, 산업장비"
+    "class_heading": "기계, 공작기계, 전동공구; 모터 및 엔진(육상차량용은 제외); 기계 커플링 및 전동장치 부품(육상차량용은 제외); 농기구(수동식 수공구는 제외); 부란기(孵卵器); 자동판매기",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 8,
-    "kind": "goods",
     "nice_class_label": "제8류",
-    "class_heading": "수공구, 절삭도구, 면도기"
+    "class_heading": "수동식 수공구 및 수동기구; 커틀러리; 휴대 무기(화기는 제외); 면도기",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 9,
-    "kind": "goods",
     "nice_class_label": "제9류",
-    "class_heading": "전자기기, 소프트웨어, 컴퓨터, 카메라, 측정기기"
+    "class_heading": "과학, 연구, 항법, 측량, 사진, 영화, 시청각, 광학, 계량, 측정, 신호, 탐지, 시험, 검사, 구명 및 교육용 기기; 전기 분배 또는 전기 사용의 전도, 전환, 변형, 축적, 조절 또는 통제를 위한 기기; 음향/영상 또는 데이터의 기록/전송/재생 또는 처리용 장치 및 기구; 기록 및 내려받기 가능한 멀티미디어 파일, 컴퓨터 소프트웨어, 빈 디지털 또는 아날로그 기록 및 저장매체; 동전작동식 기계장치; 금전등록기, 계산기; 컴퓨터 및 컴퓨터주변기기; 잠수복, 잠수마스크, 잠수용 귀마개, 다이빙용 노즈클립, 잠수용 장갑, 잠수용 호흡장치; 소화기기",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 10,
-    "kind": "goods",
     "nice_class_label": "제10류",
-    "class_heading": "의료기기, 진단기기, 수술기구"
+    "class_heading": "외과용, 내과용, 치과용 및 수의과용 기계기구; 의지(義肢), 의안(義眼) 및 의치(義齒); 안경, 콘택트렌즈 및 선글라스; 정형외과용품; 봉합용 재료; 장애인용 치료 및 재활보조장치; 안마기; 유아수유용 기기 및 용품; 성활동용 기기 및 용품",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 11,
-    "kind": "goods",
     "nice_class_label": "제11류",
-    "class_heading": "조명기구, 난방기구, 조리기구, 위생설비"
+    "class_heading": "조명용, 가열용, 냉각용, 증기발생용, 조리용, 건조용, 환기용, 급수용, 위생용 장치 및 설비",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 12,
-    "kind": "goods",
     "nice_class_label": "제12류",
-    "class_heading": "자동차, 이동수단, 운송기기 및 부품"
+    "class_heading": "수송기계기구; 육상, 항공 또는 해상을 통해 이동하는 수송수단",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 13,
-    "kind": "goods",
     "nice_class_label": "제13류",
-    "class_heading": "화기, 폭발물, 불꽃놀이용품"
+    "class_heading": "화기(火器); 탄약 및 발사체; 폭약; 폭죽",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 14,
-    "kind": "goods",
     "nice_class_label": "제14류",
-    "class_heading": "귀금속, 보석, 시계, 장신구"
+    "class_heading": "귀금속 및 그 합금; 보석, 귀석 및 반귀석; 시계용구",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 15,
-    "kind": "goods",
     "nice_class_label": "제15류",
-    "class_heading": "악기 및 그 부속품"
+    "class_heading": "악기; 악보대 및 악기용 받침대; 지휘봉",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 16,
-    "kind": "goods",
     "nice_class_label": "제16류",
-    "class_heading": "종이, 문구, 인쇄물, 출판물, 포장재"
+    "class_heading": "종이 및 판지; 인쇄물; 제본재료; 사진; 문방구 및 사무용품(가구는 제외); 문방구용 또는 가정용 접착제; 제도용구 및 미술용 재료; 회화용 솔; 교재; 포장용 플라스틱제 시트, 필름 및 가방; 인쇄활자, 프린팅블록",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 17,
-    "kind": "goods",
     "nice_class_label": "제17류",
-    "class_heading": "고무, 플라스틱, 절연재, 충전재"
+    "class_heading": "미가공 및 반가공 고무, 구타페르카, 고무액(gum), 석면, 운모(雲母) 및 이들의 제품; 제조용 압출성형형태의 플라스틱 및 수지; 충전용, 마개용 및 절연용 재료; 비금속제 신축관, 튜브 및 호스",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 18,
-    "kind": "goods",
     "nice_class_label": "제18류",
-    "class_heading": "가죽, 인조가죽, 가방, 지갑, 우산"
+    "class_heading": "가죽 및 모조가죽; 수피; 수하물가방 및 운반용 가방; 우산 및 파라솔; 걷기용 지팡이; 채찍 및 마구(馬具); 동물용 목걸이, 가죽끈 및 의류",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 19,
-    "kind": "goods",
     "nice_class_label": "제19류",
-    "class_heading": "비금속 건축재료, 목재, 타일, 아스팔트"
+    "class_heading": "건축용 및 구축용 비금속제 건축재료; 건축용 비금속제 경질관(硬質管); 아스팔트, 피치, 타르 및 역청; 비금속제 이동식 건축물; 비금속제 기념물",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 20,
-    "kind": "goods",
     "nice_class_label": "제20류",
-    "class_heading": "가구, 거울, 액자, 비금속 용기"
+    "class_heading": "가구, 거울, 액자; 보관 또는 운송용 비금속제 컨테이너; 미가공 또는 반가공 뼈, 뿔, 고래수염 또는 나전(螺鈿); 패각; 해포석(海泡石); 호박(琥珀)(원석)",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 21,
-    "kind": "goods",
     "nice_class_label": "제21류",
-    "class_heading": "주방용기구, 가정용품, 청소도구, 유리제품"
+    "class_heading": "가정용 또는 주방용 기구 및 용기; 조리기구 및 식기(포크, 나이프 및 스푼은 제외); 빗 및 스펀지; 솔(페인트 솔은 제외); 솔 제조용 재료; 청소용구; 비건축용 미가공 또는 반가공 유리; 유리제품, 도자기제품 및 토기제품",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 22,
-    "kind": "goods",
     "nice_class_label": "제22류",
-    "class_heading": "로프, 천막, 텐트, 포장용 섬유원료"
+    "class_heading": "로프 및 노끈; 망(網); 텐트 및 타폴린; 직물제 또는 합성재료제 차양; 돛; 하역물운반용 및 보관용 포대; 충전재료(고무/플라스틱/종이 및 판지제는 제외); 직물용 미가공 섬유 및 그 대용품",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 23,
-    "kind": "goods",
     "nice_class_label": "제23류",
-    "class_heading": "실, 원사, 재봉용 실"
+    "class_heading": "직물용 실(絲)",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 24,
-    "kind": "goods",
     "nice_class_label": "제24류",
-    "class_heading": "직물, 침구, 커튼, 직물제 덮개"
+    "class_heading": "직물 및 직물대용품; 가정용 린넨; 직물 또는 플라스틱제 커튼",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 25,
-    "kind": "goods",
     "nice_class_label": "제25류",
-    "class_heading": "의류, 신발, 모자"
+    "class_heading": "의류, 신발, 모자",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 26,
-    "kind": "goods",
     "nice_class_label": "제26류",
-    "class_heading": "레이스, 자수포, 리본, 단추, 장식품"
+    "class_heading": "레이스 및 자수포, 의류장식용 리본 및 나비매듭리본; 단추, 훅 및 아이(hooks and eyes), 핀 및 바늘; 조화(造花); 머리장식품; 가발",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 27,
-    "kind": "goods",
     "nice_class_label": "제27류",
-    "class_heading": "카펫, 매트, 벽지, 바닥재"
+    "class_heading": "카펫, 융단, 매트, 리놀륨 및 기타 바닥깔개용 재료; 비직물제 벽걸이",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 28,
-    "kind": "goods",
     "nice_class_label": "제28류",
-    "class_heading": "장난감, 게임기, 스포츠용품, 놀이용품"
+    "class_heading": "오락용구, 장난감; 비디오게임장치; 체조 및 스포츠용품; 크리스마스트리용 장식품",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 29,
-    "kind": "goods",
     "nice_class_label": "제29류",
-    "class_heading": "육류, 수산물, 가공식품, 유제품"
+    "class_heading": "식육, 생선, 가금 및 엽조수; 요리용 고기진액; 보존처리/냉동/건조 및 조리된 과일, 채소 및 해초; 젤리, 잼, 콤폿; 달걀; 우유, 치즈, 버터, 요구르트 및 기타 유제품; 식용 유지(油脂)",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 30,
-    "kind": "goods",
     "nice_class_label": "제30류",
-    "class_heading": "커피, 차, 제과, 제빵, 조미료"
+    "class_heading": "커피, 차(茶), 코코아 및 그 대용물; 쌀, 파스타 및 국수; 타피오카 및 사고(sago); 곡분 및 곡물 조제품; 빵, 페이스트리 및 과자; 초콜릿; 아이스크림, 셔벗 및 기타 식용 얼음; 설탕, 꿀, 당밀(糖蜜); 식품용 이스트, 베이킹 파우더; 소금, 조미료, 향신료, 보존처리된 허브; 식초, 소스 및 기타 조미료; 얼음",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 31,
-    "kind": "goods",
     "nice_class_label": "제31류",
-    "class_heading": "농산물, 곡물, 신선식품, 생화, 동물사료"
+    "class_heading": "미가공 농업, 수산양식, 원예 및 임업 생산물; 미가공 곡물 및 종자; 신선한 과실 및 채소, 신선한 허브; 살아 있는 식물 및 꽃; 구근(球根), 모종 및 재배용 곡물종자; 살아있는 동물; 동물용 사료 및 음료; 맥아",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 32,
-    "kind": "goods",
     "nice_class_label": "제32류",
-    "class_heading": "맥주, 무알코올 음료, 주스, 탄산음료"
+    "class_heading": "맥주; 비알코올성 음료; 광천수 및 탄산수; 과실음료 및 과실주스; 시럽 및 비알코올성 음료용 제제",
+    "source": "excel"
   },
   {
+    "kind": "goods",
     "nice_class_no": 33,
-    "kind": "goods",
     "nice_class_label": "제33류",
-    "class_heading": "알코올음료(맥주 제외)"
+    "class_heading": "알코올성 음료(맥주는 제외); 음료제조용 알코올성 제제",
+    "source": "excel"
   },
   {
-    "nice_class_no": 34,
     "kind": "goods",
+    "nice_class_no": 34,
     "nice_class_label": "제34류",
-    "class_heading": "담배, 전자담배, 흡연용품"
+    "class_heading": "담배 및 대용담배; 권연 및 여송연; 흡연자용 전자담배 및 기화기; 흡연용구; 성냥",
+    "source": "excel"
   },
   {
+    "kind": "services",
     "nice_class_no": 35,
-    "kind": "services",
     "nice_class_label": "제35류",
-    "class_heading": "광고업, 사업관리업, 도소매업, 사무처리업"
+    "class_heading": "광고업; 사업관리/조직 및 경영업; 사무처리업",
+    "source": "excel"
   },
   {
+    "kind": "services",
     "nice_class_no": 36,
-    "kind": "services",
     "nice_class_label": "제36류",
-    "class_heading": "금융업, 보험업, 부동산업"
+    "class_heading": "금융, 통화 및 은행업; 보험서비스업; 부동산업",
+    "source": "excel"
   },
   {
+    "kind": "services",
     "nice_class_no": 37,
-    "kind": "services",
     "nice_class_label": "제37류",
-    "class_heading": "건설업, 설치업, 수리업, 유지보수업"
+    "class_heading": "건축서비스업; 설치 및 수리서비스업; 채광업/석유 및 가스 시추업",
+    "source": "excel"
   },
   {
+    "kind": "services",
     "nice_class_no": 38,
-    "kind": "services",
     "nice_class_label": "제38류",
-    "class_heading": "통신업, 데이터 전송업, 방송업"
+    "class_heading": "통신서비스업",
+    "source": "excel"
   },
   {
+    "kind": "services",
     "nice_class_no": 39,
-    "kind": "services",
     "nice_class_label": "제39류",
-    "class_heading": "운송업, 물류업, 여행예약업, 창고업"
+    "class_heading": "운송업; 상품의 포장 및 보관업; 여행알선업",
+    "source": "excel"
   },
   {
+    "kind": "services",
     "nice_class_no": 40,
-    "kind": "services",
     "nice_class_label": "제40류",
-    "class_heading": "재료처리업, 가공업, 맞춤제작업"
+    "class_heading": "재료처리업; 폐기물 재생업; 공기 정화 및 물 처리업; 인쇄 서비스업; 음식 및 음료수 보존업",
+    "source": "excel"
   },
   {
+    "kind": "services",
     "nice_class_no": 41,
-    "kind": "services",
     "nice_class_label": "제41류",
-    "class_heading": "교육업, 훈련업, 오락업, 문화활동업"
+    "class_heading": "교육업; 훈련제공업; 연예오락업; 스포츠 및 문화활동업",
+    "source": "excel"
   },
   {
+    "kind": "services",
     "nice_class_no": 42,
-    "kind": "services",
     "nice_class_label": "제42류",
-    "class_heading": "과학기술 서비스업, 연구개발업, 소프트웨어 서비스업"
+    "class_heading": "과학적, 기술적 서비스업 및 관련 연구, 디자인업; 산업분석, 산업연구 및 산업디자인 서비스업; 품질 관리 및 인증 서비스업; 컴퓨터 하드웨어 및 소프트웨어의 디자인 및 개발업",
+    "source": "excel"
   },
   {
+    "kind": "services",
     "nice_class_no": 43,
-    "kind": "services",
     "nice_class_label": "제43류",
-    "class_heading": "음식점업, 카페업, 숙박업"
+    "class_heading": "식음료제공서비스업; 임시숙박시설업",
+    "source": "excel"
   },
   {
+    "kind": "services",
     "nice_class_no": 44,
-    "kind": "services",
     "nice_class_label": "제44류",
-    "class_heading": "의료업, 미용업, 동물관리업, 농업서비스업"
+    "class_heading": "의료업; 수의업; 인간 또는 동물을 위한 위생 및 미용업; 농업, 수산양식, 원예 및 임업 서비스업",
+    "source": "excel"
   },
   {
-    "nice_class_no": 45,
     "kind": "services",
+    "nice_class_no": 45,
     "nice_class_label": "제45류",
-    "class_heading": "법률업, 지식재산업, 보안업, 개인·사회서비스업"
+    "class_heading": "법무서비스업; 유형의 재산 및 개인을 물리적으로 보호하기 위한 보안서비스업; 이성(異性) 소개업, 온라인 소셜 네트워킹 서비스업; 장례업; 베이비시팅업",
+    "source": "excel"
   }
 ]

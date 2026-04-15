@@ -254,7 +254,7 @@ def normalize_refusal_analysis(
     if not reason_summary:
         summary_parts = []
         if refusal_core:
-            summary_parts.append(f"핵심 요부: {refusal_core}")
+            summary_parts.append(f"거절 핵심 요부: {refusal_core}")
         if cited_marks:
             summary_parts.append(f"인용상표: {', '.join(cited_marks)}")
         if refusal_basis:
