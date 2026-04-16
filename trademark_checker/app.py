@@ -8,13 +8,17 @@ from improvement import get_improvements
 from kipris_api import search_all_pages
 from nice_catalog import (
     build_selection_summary,
+    build_scope_session_state,
     can_continue_to_code_selection,
     can_enter_subgroup_stage,
+    can_run_review,
+    derive_selected_scope,
     find_group,
     format_nice_classes,
     get_group_cards,
     get_groups,
     is_subgroup_selection_complete,
+    should_render_subgroup_stage,
     subgroup_to_field,
     validate_catalog_coverage,
 )
@@ -103,7 +107,7 @@ def ensure_field_input(field: dict) -> dict:
     inputs = get_field_inputs()
     key = field_key(field)
     if key not in inputs:
-        inputs[key] = {"specific_product": "", "selected_codes": []}
+        inputs[key] = {"specific_product": ""}
     return inputs[key]
 
 
@@ -145,7 +149,7 @@ def update_field_product(field: dict, product: str) -> None:
     config = ensure_field_input(field)
     if config["specific_product"] != product:
         config["specific_product"] = product
-        config["selected_codes"] = []
+        sync_nice_selection_state()
         reset_analysis_state()
 
 
@@ -161,8 +165,7 @@ def toggle_field_code(field: dict, code: str) -> None:
 
 
 def field_ready(field: dict) -> bool:
-    config = get_field_input(field)
-    return bool(config.get("specific_product", "").strip() and config.get("selected_codes"))
+    return bool(field)
 
 
 def all_fields_ready() -> bool:
@@ -236,44 +239,73 @@ def field_label(field: dict) -> str:
 
 def sync_nice_selection_state() -> None:
     selected_fields = current_selected_fields()
-    st.session_state.selected_groups = list(
-        dict.fromkeys(field.get("group_label", "") for field in selected_fields if field.get("group_label"))
+    specific_products = {
+        field_key(field): get_field_input(field).get("specific_product", "")
+        for field in selected_fields
+    }
+    scope_state = build_scope_session_state(
+        selected_kind=st.session_state.get("selected_kind"),
+        selected_group_id=st.session_state.get("selected_group_id", st.session_state.get("selected_group")),
+        selected_group_label=st.session_state.get("selected_group_label"),
+        selected_fields=selected_fields,
+        specific_products=specific_products,
+        code_lookup=get_similarity_codes,
+        current_substep=st.session_state.get("step_scope_sub", st.session_state.get("step2_substep", "group")),
     )
-    st.session_state.selected_subgroups = [
-        field.get("description", "") for field in selected_fields if field.get("description")
-    ]
-    st.session_state.selected_nice_classes = sorted(
-        {
-            int(class_no)
-            for field in selected_fields
-            for class_no in field.get("nice_classes", [])
-        }
-    )
-    st.session_state.recommended_similarity_codes = list(
-        dict.fromkeys(
-            code
-            for field in selected_fields
-            for code in field.get("similarity_codes", [])
-        )
-    )
-    st.session_state.selected_similarity_codes = list(
-        dict.fromkeys(
-            code
-            for field in selected_fields
-            for code in get_field_input(field).get("selected_codes", [])
-        )
-    )
-    st.session_state.selected_keywords = list(
-        dict.fromkeys(
-            keyword
-            for field in selected_fields
-            for keyword in field.get("keywords", [])
-        )
+    st.session_state.selected_groups = scope_state["selected_groups"]
+    st.session_state.selected_subgroups = scope_state["selected_subgroups"]
+    st.session_state.selected_subgroup_ids = scope_state["selected_subgroup_ids"]
+    st.session_state.selected_subgroup_labels = scope_state["selected_subgroup_labels"]
+    st.session_state.derived_nice_classes = scope_state["derived_nice_classes"]
+    st.session_state.derived_similarity_codes = scope_state["derived_similarity_codes"]
+    st.session_state.candidate_similarity_codes = scope_state.get("candidate_similarity_codes", [])
+    st.session_state.similarity_match_details = scope_state.get("similarity_match_details", [])
+    st.session_state.subgroup_keywords = scope_state["subgroup_keywords"]
+    st.session_state.search_terms_for_prior_marks = scope_state["search_terms_for_prior_marks"]
+    st.session_state.selected_scope_summary = scope_state["selected_scope_summary"]
+    st.session_state.selected_nice_classes = scope_state["derived_nice_classes"]
+    st.session_state.recommended_similarity_codes = scope_state["derived_similarity_codes"]
+    st.session_state.selected_similarity_codes = scope_state["derived_similarity_codes"]
+    st.session_state.selected_keywords = scope_state["subgroup_keywords"]
+    st.session_state.selected_group_id = scope_state["selected_group_id"]
+    st.session_state.selected_group_label = scope_state["selected_group_label"]
+    st.session_state.selected_group = scope_state["selected_group_id"]
+    st.session_state.step_scope_sub = scope_state["step_scope_sub"]
+    st.session_state.step2_substep = (
+        "subgroup" if scope_state["step_scope_sub"] in {"subgroup", "review_ready"} else "group"
     )
     if selected_fields:
         st.session_state.selected_kind = selected_fields[0].get("kind", st.session_state.get("selected_kind"))
-    elif st.session_state.get("selected_group"):
-        st.session_state.selected_group = None
+
+
+def current_specific_products(fields: list[dict] | None = None) -> dict[str, str]:
+    selected_fields = fields or current_selected_fields()
+    return {
+        field_key(field): get_field_input(field).get("specific_product", "")
+        for field in selected_fields
+    }
+
+
+def derive_scope_state(fields: list[dict] | None = None) -> dict:
+    selected_fields = fields or current_selected_fields()
+    return build_scope_session_state(
+        selected_kind=st.session_state.get("selected_kind"),
+        selected_group_id=st.session_state.get("selected_group_id", st.session_state.get("selected_group")),
+        selected_group_label=st.session_state.get("selected_group_label"),
+        selected_fields=selected_fields,
+        specific_products=current_specific_products(selected_fields),
+        code_lookup=get_similarity_codes,
+        current_substep=st.session_state.get("step_scope_sub", st.session_state.get("step2_substep", "group")),
+    )
+
+
+def derive_field_scope(field: dict) -> dict:
+    return derive_selected_scope(
+        selected_kind=field.get("kind", st.session_state.get("selected_kind")),
+        selected_fields=[field],
+        specific_products={field_key(field): get_field_input(field).get("specific_product", "")},
+        code_lookup=get_similarity_codes,
+    )
 
 
 def set_selected_kind(kind: str) -> None:
@@ -282,10 +314,14 @@ def set_selected_kind(kind: str) -> None:
         st.session_state.selection_error = "제품과 서비스는 한 번에 섞어서 분석할 수 없습니다. 기존 선택을 해제한 뒤 전환하세요."
         return
     st.session_state.selected_kind = kind
+    st.session_state.step_scope_sub = "group"
     st.session_state.step2_substep = "group"
-    if st.session_state.get("selected_group"):
+    if st.session_state.get("selected_group_id", st.session_state.get("selected_group")):
         available_groups = {group["group_id"] for group in get_groups(kind)}
-        if st.session_state.selected_group not in available_groups:
+        selected_group_id = st.session_state.get("selected_group_id", st.session_state.get("selected_group"))
+        if selected_group_id not in available_groups:
+            st.session_state.selected_group_id = None
+            st.session_state.selected_group_label = ""
             st.session_state.selected_group = None
     st.session_state.selection_error = ""
     reset_analysis_state()
@@ -299,9 +335,18 @@ def clear_selected_fields() -> None:
 
 
 def set_selected_group(group_id: str) -> None:
-    if st.session_state.get("selected_group") != group_id:
+    active_group = find_group(st.session_state.get("selected_kind"), group_id)
+    if st.session_state.get("selected_group_id", st.session_state.get("selected_group")) != group_id:
+        st.session_state.selected_group_id = group_id
+        st.session_state.selected_group_label = active_group.get("group_label", "") if active_group else ""
         st.session_state.selected_group = group_id
+        st.session_state.step_scope_sub = "group"
+        st.session_state.step2_substep = "group"
         clear_selected_fields()
+    else:
+        st.session_state.selected_group_label = active_group.get("group_label", "") if active_group else ""
+        st.session_state.step_scope_sub = "group"
+        st.session_state.step2_substep = "group"
     st.session_state.selection_error = ""
 
 
@@ -346,11 +391,16 @@ def build_report_payload() -> dict:
                 "field_label": field_label(field),
                 "specific_product": report.get("specific_product", ""),
                 "selected_kind": report.get("selected_kind", field.get("kind")),
+                "selected_group_id": report.get("selected_group_id", field.get("group_id")),
                 "selected_groups": report.get("selected_groups", [field.get("group_label", "")]),
+                "selected_subgroup_ids": report.get("selected_subgroup_ids", [field.get("field_id", "")]),
                 "selected_subgroups": report.get("selected_subgroups", [field.get("description", "")]),
                 "selected_nice_classes": report.get("selected_nice_classes", field.get("nice_classes", [])),
+                "derived_nice_classes": report.get("selected_nice_classes", field.get("nice_classes", [])),
                 "selected_similarity_codes": report.get("selected_similarity_codes", report.get("selected_codes", [])),
+                "derived_similarity_codes": report.get("selected_similarity_codes", report.get("selected_codes", [])),
                 "selected_keywords": report.get("selected_keywords", field.get("keywords", [])),
+                "subgroup_keywords": report.get("selected_keywords", field.get("keywords", [])),
                 "selected_classes": [format_nice_classes(field.get("nice_classes", [])) or field_label(field)],
                 "selected_codes": report.get("selected_codes", []),
                 "score": report.get("score", 0),
@@ -396,15 +446,23 @@ def build_report_payload() -> dict:
         "trademark_name": st.session_state.get("trademark_name", ""),
         "trademark_type": st.session_state.get("trademark_type", ""),
         "selected_kind": st.session_state.get("selected_kind"),
+        "selected_group_id": st.session_state.get("selected_group_id"),
+        "selected_group_label": st.session_state.get("selected_group_label", ""),
         "selected_groups": st.session_state.get("selected_groups", []),
+        "selected_subgroup_ids": st.session_state.get("selected_subgroup_ids", []),
+        "selected_subgroup_labels": st.session_state.get("selected_subgroup_labels", []),
         "selected_subgroups": [
             field.get("description", "")
             for field in current_selected_fields()
             if field.get("description")
         ],
         "selected_nice_classes": st.session_state.get("selected_nice_classes", []),
+        "derived_nice_classes": st.session_state.get("derived_nice_classes", []),
         "selected_similarity_codes": st.session_state.get("selected_similarity_codes", []),
+        "derived_similarity_codes": st.session_state.get("derived_similarity_codes", []),
         "selected_keywords": st.session_state.get("selected_keywords", []),
+        "subgroup_keywords": st.session_state.get("subgroup_keywords", []),
+        "search_terms_for_prior_marks": st.session_state.get("search_terms_for_prior_marks", []),
         "selected_classes": [format_nice_classes(st.session_state.get("selected_nice_classes", []))],
         "field_reports": field_reports,
     }
@@ -573,6 +631,539 @@ def render_step2() -> None:
                 st.rerun()
 
 
+def render_scope_step() -> None:
+    coverage = validate_catalog_coverage()
+    selected_kind = st.session_state.get("selected_kind")
+    selected_group = st.session_state.get("selected_group")
+    step2_substep = st.session_state.get("step2_substep", "group")
+
+    st.markdown(f"## '{st.session_state.trademark_name}' 상표의 상품범위를 선택하세요")
+    st.markdown("### 분류 1 → 분류 2 → 구체상품군 순서로 선택합니다")
+    st.caption(
+        f"엑셀 기준 확인: goods {coverage['goods_class_count']}개 / services {coverage['services_class_count']}개"
+    )
+
+    st.markdown("### 1. 분류 1 선택")
+    kind_col1, kind_col2 = st.columns(2)
+    with kind_col1:
+        if st.button("제품\n(제품, 브랜드)", use_container_width=True, key="scope_kind_goods"):
+            set_selected_kind("goods")
+            st.rerun()
+    with kind_col2:
+        if st.button("서비스\n(상호, 서비스)", use_container_width=True, key="scope_kind_services"):
+            set_selected_kind("services")
+            st.rerun()
+
+    if selected_kind:
+        st.markdown(f"선택 분류 1: **{'제품' if selected_kind == 'goods' else '서비스'}**")
+        st.markdown("### 2. 분류 2 선택")
+        st.caption("이 단계에서는 짧은 카테고리명만 보여줍니다.")
+
+        group_cards = get_group_cards(selected_kind)
+        group_cols = st.columns(3)
+        for index, group_card in enumerate(group_cards):
+            with group_cols[index % 3]:
+                active = selected_group == group_card["group_id"]
+                st.markdown(
+                    f"""
+                    <div class="category-card">
+                        <b>{group_card['group_label']}</b><br>
+                        <small style="color:#546E7A;">{group_card.get('group_hint', '')}</small><br>
+                        <small style="color:#546E7A;">연결 니스류 {group_card['nice_class_summary']}</small>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                if st.button(
+                    "선택 중" if active else "카테고리 선택",
+                    key=f"scope_group_{group_card['group_id']}",
+                    use_container_width=True,
+                ):
+                    set_selected_group(group_card["group_id"])
+                    st.session_state.step2_substep = "group"
+                    st.rerun()
+    else:
+        st.info("먼저 제품 또는 서비스를 선택하세요.")
+
+    if st.session_state.selection_error:
+        st.warning(st.session_state.selection_error)
+
+    if step2_substep == "subgroup" and can_enter_subgroup_stage(selected_kind, selected_group):
+        active_group = find_group(selected_kind, selected_group)
+        if active_group:
+            st.markdown("---")
+            st.markdown("### 3. 구체상품군 선택")
+            st.caption("선택한 카테고리에 해당하는 상품군을 1개 이상 선택하세요")
+            st.markdown(f"선택 카테고리: **{active_group['group_label']}**")
+            st.caption(
+                f"{active_group.get('group_hint', '')} | 연결 니스류 {format_nice_classes(active_group.get('classes', []))}"
+            )
+
+            subgroup_cols = st.columns(2)
+            for index, subgroup in enumerate(active_group.get("subgroups", [])):
+                subgroup_payload = subgroup_to_field(
+                    {
+                        "kind": selected_kind,
+                        "group_id": active_group["group_id"],
+                        "group_label": active_group["group_label"],
+                        "group_hint": active_group.get("group_hint", ""),
+                        **subgroup,
+                    }
+                )
+                already_selected = any(
+                    field_key(field) == field_key(subgroup_payload)
+                    for field in current_selected_fields()
+                )
+                with subgroup_cols[index % 2]:
+                    st.markdown(
+                        f"""
+                        <div class="category-card">
+                            <b>{subgroup['subgroup_label']}</b><br>
+                            <small style="color:#546E7A;">연결 니스류 {format_nice_classes(subgroup.get('nice_classes', []))}</small><br>
+                            <small style="color:#546E7A;">추천 유사군코드 {', '.join(subgroup.get('similarity_codes', [])) or '-'}</small>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                    if st.button(
+                        "선택 해제" if already_selected else "상품군 선택",
+                        key=f"scope_subgroup_{subgroup['subgroup_id']}",
+                    ):
+                        if already_selected:
+                            remove_selected_field(field_key(subgroup_payload))
+                        else:
+                            add_selected_field(subgroup_payload)
+                        st.rerun()
+
+    if current_selected_fields():
+        derived_scope = derive_scope_state()
+        st.markdown("---")
+        st.markdown("### 선택 결과 요약")
+        st.markdown(f"선택 분류 1: **{derived_scope['selected_scope_summary']['selected_kind_label']}**")
+        st.markdown(f"선택 분류 2: **{', '.join(derived_scope['selected_groups'])}**")
+        st.markdown(f"선택 상품군: **{', '.join(derived_scope['selected_subgroups'])}**")
+        st.markdown(
+            f"연결 니스류: **{derived_scope['selected_scope_summary']['selected_nice_classes_text']}**"
+        )
+        if derived_scope["derived_similarity_codes"]:
+            st.caption(
+                f"내부 도출 유사군코드: {', '.join(derived_scope['derived_similarity_codes'])}"
+            )
+
+    prev_col, next_col = st.columns(2)
+    with prev_col:
+        if step2_substep == "subgroup":
+            if st.button("이전 단계: 카테고리 선택", use_container_width=True, key="scope_back_group"):
+                st.session_state.step2_substep = "group"
+                st.rerun()
+        else:
+            if st.button("이전 단계", use_container_width=True, key="scope_back_name"):
+                st.session_state.step = 1
+                st.rerun()
+    with next_col:
+        if step2_substep == "subgroup":
+            if st.button(
+                "다음 단계: 검토",
+                use_container_width=True,
+                type="primary",
+                disabled=not can_continue_to_code_selection(current_selected_fields()),
+                key="scope_next_review",
+            ):
+                sync_nice_selection_state()
+                st.session_state.step = 3
+                st.rerun()
+        else:
+            if st.button(
+                "구체상품군 선택 단계로 이동",
+                use_container_width=True,
+                type="primary",
+                disabled=not can_enter_subgroup_stage(selected_kind, selected_group),
+                key="scope_go_subgroups",
+            ):
+                st.session_state.step2_substep = "subgroup"
+                st.rerun()
+
+
+def render_scope_step() -> None:
+    coverage = validate_catalog_coverage()
+    scope_state = derive_scope_state()
+    selected_kind = scope_state.get("selected_kind")
+    selected_group_id = scope_state.get("selected_group_id")
+    selected_group_label = scope_state.get("selected_group_label")
+    step_scope_sub = scope_state.get("step_scope_sub", "group")
+
+    st.markdown(f"## '{st.session_state.trademark_name}' 상표의 상품범위를 선택하세요")
+    st.markdown("### 분류 1 -> 분류 2 -> 구체상품군 순서로 단계별로 선택합니다")
+    st.caption(
+        f"카탈로그 기준 확인: goods {coverage['goods_class_count']}개 / services {coverage['services_class_count']}개"
+    )
+
+    st.markdown("### 1. 분류 1 선택")
+    kind_col1, kind_col2 = st.columns(2)
+    with kind_col1:
+        if st.button("제품", use_container_width=True, key="scope_kind_goods"):
+            set_selected_kind("goods")
+            st.rerun()
+    with kind_col2:
+        if st.button("서비스", use_container_width=True, key="scope_kind_services"):
+            set_selected_kind("services")
+            st.rerun()
+
+    if selected_kind:
+        selected_kind_label = "제품" if selected_kind == "goods" else "서비스"
+        st.markdown("### 2. 분류 2 선택")
+        st.caption("분류 2 카테고리를 먼저 고른 뒤, 다음 단계에서 해당 구체상품군을 선택합니다.")
+
+        group_cards = get_group_cards(selected_kind)
+        group_cols = st.columns(3)
+        for index, group_card in enumerate(group_cards):
+            active = selected_group_id == group_card["group_id"]
+            card_style = (
+                "background:#E8F5E9; border:2px solid #2E7D32;"
+                if active
+                else "background:#F8FBFF; border:2px solid #90CAF9;"
+            )
+            with group_cols[index % 3]:
+                st.markdown(
+                    f"""
+                    <div style="{card_style} border-radius:12px; padding:16px; margin:8px 0;">
+                        <b>{group_card['group_label']}</b><br>
+                        <small style="color:#546E7A;">{group_card.get('group_hint', '')}</small><br>
+                        <small style="color:#546E7A;">연결 니스류 {group_card['nice_class_summary']}</small><br>
+                        <small style="color:{'#2E7D32' if active else '#546E7A'};">{'선택됨' if active else '선택 가능'}</small>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                if st.button(
+                    "선택됨" if active else "카테고리 선택",
+                    key=f"scope_group_{group_card['group_id']}",
+                    use_container_width=True,
+                ):
+                    set_selected_group(group_card["group_id"])
+                    st.rerun()
+
+        st.markdown("---")
+        st.markdown("### 현재 선택 요약")
+        st.markdown(f"- 현재 선택한 분류 1: **{selected_kind_label}**")
+        st.markdown(f"- 현재 선택한 분류 2: **{selected_group_label or '-'}**")
+    else:
+        st.info("먼저 제품 또는 서비스를 선택하세요.")
+
+    if st.session_state.selection_error:
+        st.warning(st.session_state.selection_error)
+
+    if should_render_subgroup_stage(step_scope_sub, selected_kind, selected_group_id):
+        active_group = find_group(selected_kind, selected_group_id)
+        if active_group:
+            st.markdown("---")
+            st.markdown("### 3. 구체상품군 선택")
+            st.caption("선택한 카테고리에 해당하는 상품군을 1개 이상 선택하세요")
+            st.markdown(f"선택한 카테고리: **{active_group['group_label']}**")
+            st.caption(
+                f"{active_group.get('group_hint', '')} | 연결 니스류 {format_nice_classes(active_group.get('classes', []))}"
+            )
+
+            subgroup_cols = st.columns(2)
+            for index, subgroup in enumerate(active_group.get("subgroups", [])):
+                subgroup_payload = subgroup_to_field(
+                    {
+                        "kind": selected_kind,
+                        "group_id": active_group["group_id"],
+                        "group_label": active_group["group_label"],
+                        "group_hint": active_group.get("group_hint", ""),
+                        **subgroup,
+                    }
+                )
+                already_selected = any(
+                    field_key(field) == field_key(subgroup_payload)
+                    for field in current_selected_fields()
+                )
+                card_style = (
+                    "background:#FFF8E1; border:2px solid #FB8C00;"
+                    if already_selected
+                    else "background:#FFFFFF; border:1px solid #CFD8DC;"
+                )
+                with subgroup_cols[index % 2]:
+                    st.markdown(
+                        f"""
+                        <div style="{card_style} border-radius:12px; padding:16px; margin:8px 0;">
+                            <b>{subgroup['subgroup_label']}</b><br>
+                            <small style="color:#546E7A;">연결 니스류 {format_nice_classes(subgroup.get('nice_classes', []))}</small><br>
+                            <small style="color:#546E7A;">내부 유사군코드 {', '.join(subgroup.get('similarity_codes', [])) or '-'}</small><br>
+                            <small style="color:{'#E65100' if already_selected else '#607D8B'};">{'선택됨' if already_selected else '선택 가능'}</small>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                    if st.button(
+                        "선택 해제" if already_selected else "상품군 선택",
+                        key=f"scope_subgroup_{subgroup['subgroup_id']}",
+                        use_container_width=True,
+                    ):
+                        if already_selected:
+                            remove_selected_field(field_key(subgroup_payload))
+                        else:
+                            add_selected_field(subgroup_payload)
+                        st.rerun()
+
+    scope_state = derive_scope_state()
+    if scope_state["selected_subgroup_ids"]:
+        selected_kind_label = "제품" if selected_kind == "goods" else "서비스"
+        st.markdown("---")
+        st.markdown("### 선택 결과 요약")
+        st.markdown(f"- 현재 선택한 분류 1: **{selected_kind_label}**")
+        st.markdown(f"- 현재 선택한 분류 2: **{scope_state['selected_group_label'] or '-'}**")
+        st.markdown(f"- 선택한 구체상품군: **{', '.join(scope_state['selected_subgroup_labels'])}**")
+        st.markdown(
+            f"- 도출 니스류: **{format_nice_classes(scope_state['derived_nice_classes']) or '-'}**"
+        )
+        st.markdown(
+            f"- 내부 도출 유사군코드: **{', '.join(scope_state['derived_similarity_codes']) or '-'}**"
+        )
+        st.caption("선택한 구체상품군을 기준으로 상품유사군코드.xlsx의 예규상 가장 근접한 유사군코드를 자동 도출했습니다.")
+
+    prev_col, next_col = st.columns(2)
+    with prev_col:
+        if should_render_subgroup_stage(step_scope_sub, selected_kind, selected_group_id):
+            if st.button("이전 단계: 분류 2 선택", use_container_width=True, key="scope_back_group"):
+                st.session_state.step_scope_sub = "group"
+                st.session_state.step2_substep = "group"
+                st.rerun()
+        else:
+            if st.button("이전 단계", use_container_width=True, key="scope_back_name"):
+                st.session_state.step = 1
+                st.rerun()
+    with next_col:
+        if should_render_subgroup_stage(step_scope_sub, selected_kind, selected_group_id):
+            if st.button(
+                "검토 실행 단계로 이동",
+                use_container_width=True,
+                type="primary",
+                disabled=not can_run_review(scope_state["selected_subgroup_ids"]),
+                key="scope_next_review",
+            ):
+                sync_nice_selection_state()
+                st.session_state.step = 3
+                st.rerun()
+        else:
+            if st.button(
+                "구체상품군 선택 단계로 이동",
+                use_container_width=True,
+                type="primary",
+                disabled=not can_enter_subgroup_stage(selected_kind, selected_group_id),
+                key="scope_go_subgroups",
+            ):
+                st.session_state.step_scope_sub = "subgroup"
+                st.session_state.step2_substep = "subgroup"
+                st.rerun()
+
+    with st.expander("개발 디버그", expanded=False):
+        st.code(
+            "\n".join(
+                [
+                    f"selected_kind={selected_kind}",
+                    f"selected_group_id={selected_group_id}",
+                    f"selected_group_label={selected_group_label}",
+                    f"step_scope_sub={step_scope_sub}",
+                    f"selected_subgroup_count={len(scope_state['selected_subgroup_ids'])}",
+                    f"selected_subgroups={scope_state['selected_subgroup_labels']}",
+                    f"candidate_similarity_codes={scope_state.get('candidate_similarity_codes', [])}",
+                    f"chosen_similarity_codes={scope_state['derived_similarity_codes']}",
+                ]
+            )
+        )
+        for detail in scope_state.get("similarity_match_details", []):
+            st.code(
+                "\n".join(
+                    [
+                        f"subgroup: {detail.get('subgroup', '-')}",
+                        f"candidates: {', '.join(detail.get('candidate_similarity_codes', [])) or '-'}",
+                        f"chosen: {', '.join(detail.get('chosen_similarity_codes', [])) or '-'}",
+                        f"reason: {detail.get('match_reason', '-')}",
+                        f"confidence: {detail.get('match_confidence', '-')}",
+                        f"fallback_used: {detail.get('fallback_used', False)}",
+                    ]
+                )
+            )
+
+
+def render_review_step() -> None:
+    selected_fields = current_selected_fields()
+    derived_scope = derive_scope_state(selected_fields)
+
+    st.markdown("## 검토 실행")
+    st.markdown("### 선택한 구체상품군을 기준으로 관련 니스류와 유사군코드를 시스템이 자동 도출합니다")
+
+    if not selected_fields:
+        st.warning("먼저 구체상품군을 선택하세요.")
+        if st.button("상품범위 선택으로 돌아가기", use_container_width=True):
+            st.session_state.step = 2
+            st.session_state.step2_substep = "subgroup"
+            st.rerun()
+        return
+
+    st.markdown(
+        f"""
+        <div class="card">
+            <b>선택 분류 1</b>: {derived_scope['selected_scope_summary']['selected_kind_label']} |
+            <b>선택 분류 2</b>: {', '.join(derived_scope['selected_groups']) or '-'} |
+            <b>선택 상품군</b>: {', '.join(derived_scope['selected_subgroups']) or '-'}<br>
+            <small style="color:#546E7A;">
+            연결 니스류 {derived_scope['selected_scope_summary']['selected_nice_classes_text']} |
+            내부 도출 유사군코드 {', '.join(derived_scope['derived_similarity_codes']) or '-'}
+            </small>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.caption("구체 상품명/서비스명을 추가 입력하면 선택한 상품군 범위 안에서만 내부 매핑을 보강합니다.")
+    for index, field in enumerate(selected_fields, start=1):
+        config = get_field_input(field)
+        specific_product = st.text_input(
+            f"{index}. {field.get('group_label', '-') } > {field_label(field)}",
+            placeholder=field.get("example", ""),
+            value=config.get("specific_product", ""),
+            key=f"review_specific_{field_widget_key(field)}",
+        )
+        if specific_product != config.get("specific_product", ""):
+            update_field_product(field, specific_product)
+            st.rerun()
+
+    derived_scope = derive_scope_state(selected_fields)
+    st.markdown("### 내부 검토 입력")
+    st.markdown(f"- 구체상품군: {', '.join(derived_scope['selected_subgroups'])}")
+    st.markdown(f"- 연결 니스류: {format_nice_classes(derived_scope['derived_nice_classes'])}")
+    st.markdown(f"- 내부 유사군코드: {', '.join(derived_scope['derived_similarity_codes']) or '-'}")
+    st.markdown(
+        f"- 검색 보조 키워드: {', '.join(derived_scope['search_terms_for_prior_marks'][:8]) or '-'}"
+    )
+
+    prev_col, next_col = st.columns(2)
+    with prev_col:
+        if st.button("이전 단계: 상품범위", use_container_width=True, key="review_back_scope"):
+            st.session_state.step = 2
+            st.session_state.step2_substep = "subgroup"
+            st.rerun()
+    with next_col:
+        if st.button(
+            "검토 실행",
+            use_container_width=True,
+            type="primary",
+            disabled=not all_fields_ready(),
+            key="review_run_analysis",
+        ):
+            sync_nice_selection_state()
+            reset_analysis_state()
+            st.session_state.step = 4
+            st.rerun()
+
+
+def render_review_step() -> None:
+    selected_fields = current_selected_fields()
+    scope_state = derive_scope_state(selected_fields)
+
+    st.markdown("## 검토 실행")
+    st.markdown("### 선택한 구체상품군을 기준으로 니스류와 유사군코드를 내부 계산한 뒤 검토합니다")
+    st.caption("선택한 구체상품군을 기준으로 상품유사군코드.xlsx의 예규상 가장 근접한 유사군코드를 자동 도출했습니다.")
+
+    if not can_run_review(scope_state["selected_subgroup_ids"]):
+        st.warning("먼저 구체상품군을 1개 이상 선택하세요.")
+        if st.button("상품범위 선택으로 돌아가기", use_container_width=True):
+            st.session_state.step = 2
+            st.session_state.step_scope_sub = "subgroup"
+            st.session_state.step2_substep = "subgroup"
+            st.rerun()
+        return
+
+    selected_kind_label = "제품" if scope_state["selected_kind"] == "goods" else "서비스"
+    st.markdown(
+        f"""
+        <div class="card">
+            <b>선택 분류 1</b>: {selected_kind_label} |
+            <b>선택 분류 2</b>: {scope_state['selected_group_label'] or '-'} |
+            <b>선택 상품군</b>: {', '.join(scope_state['selected_subgroup_labels']) or '-'}<br>
+            <small style="color:#546E7A;">
+            도출 니스류 {format_nice_classes(scope_state['derived_nice_classes']) or '-'} |
+            내부 유사군코드 {', '.join(scope_state['derived_similarity_codes']) or '-'}
+            </small>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.caption("구체 상품명이나 서비스명을 추가 입력하면 선택한 상품군 범위 안에서만 내부 매핑을 보정합니다.")
+    for index, field in enumerate(selected_fields, start=1):
+        config = get_field_input(field)
+        specific_product = st.text_input(
+            f"{index}. {field.get('group_label', '-') } > {field_label(field)}",
+            placeholder=field.get("example", ""),
+            value=config.get("specific_product", ""),
+            key=f"review_specific_{field_widget_key(field)}",
+        )
+        if specific_product != config.get("specific_product", ""):
+            update_field_product(field, specific_product)
+            st.rerun()
+
+    scope_state = derive_scope_state(selected_fields)
+    st.markdown("### 내부 검토 입력")
+    st.markdown(f"- 구체상품군: {', '.join(scope_state['selected_subgroup_labels'])}")
+    st.markdown(f"- 연결 니스류: {format_nice_classes(scope_state['derived_nice_classes']) or '-'}")
+    st.markdown(f"- 내부 유사군코드: {', '.join(scope_state['derived_similarity_codes']) or '-'}")
+    st.markdown(
+        f"- 검색 보조 키워드: {', '.join(scope_state['search_terms_for_prior_marks'][:8]) or '-'}"
+    )
+
+    with st.expander("개발 디버그", expanded=False):
+        st.code(
+            "\n".join(
+                [
+                    f"selected_kind={scope_state['selected_kind']}",
+                    f"selected_group_id={scope_state['selected_group_id']}",
+                    f"step_scope_sub={scope_state['step_scope_sub']}",
+                    f"selected_subgroup_count={len(scope_state['selected_subgroup_ids'])}",
+                    f"selected_subgroups={scope_state['selected_subgroup_labels']}",
+                    f"candidate_similarity_codes={scope_state.get('candidate_similarity_codes', [])}",
+                    f"chosen_similarity_codes={scope_state['derived_similarity_codes']}",
+                ]
+            )
+        )
+        for detail in scope_state.get("similarity_match_details", []):
+            st.code(
+                "\n".join(
+                    [
+                        f"subgroup: {detail.get('subgroup', '-')}",
+                        f"candidates: {', '.join(detail.get('candidate_similarity_codes', [])) or '-'}",
+                        f"chosen: {', '.join(detail.get('chosen_similarity_codes', [])) or '-'}",
+                        f"reason: {detail.get('match_reason', '-')}",
+                        f"confidence: {detail.get('match_confidence', '-')}",
+                        f"fallback_used: {detail.get('fallback_used', False)}",
+                    ]
+                )
+            )
+
+    prev_col, next_col = st.columns(2)
+    with prev_col:
+        if st.button("이전 단계: 상품범위", use_container_width=True, key="review_back_scope"):
+            st.session_state.step = 2
+            st.session_state.step_scope_sub = "subgroup"
+            st.session_state.step2_substep = "subgroup"
+            st.rerun()
+    with next_col:
+        if st.button(
+            "검토 실행",
+            use_container_width=True,
+            type="primary",
+            disabled=not can_run_review(scope_state["selected_subgroup_ids"]),
+            key="review_run_analysis",
+        ):
+            sync_nice_selection_state()
+            reset_analysis_state()
+            st.session_state.step = 4
+            st.rerun()
+
+
 def similarity_cell_style(value) -> str:
     try:
         numeric = int(str(value).replace("%", ""))
@@ -716,20 +1307,44 @@ if "selected_fields" not in st.session_state:
     st.session_state.selected_fields = []
 if "selected_kind" not in st.session_state:
     st.session_state.selected_kind = None
+if "selected_group_id" not in st.session_state:
+    st.session_state.selected_group_id = None
+if "selected_group_label" not in st.session_state:
+    st.session_state.selected_group_label = ""
 if "selected_group" not in st.session_state:
     st.session_state.selected_group = None
+if "step_scope_sub" not in st.session_state:
+    st.session_state.step_scope_sub = "group"
 if "step2_substep" not in st.session_state:
     st.session_state.step2_substep = "group"
 if "selected_groups" not in st.session_state:
     st.session_state.selected_groups = []
 if "selected_subgroups" not in st.session_state:
     st.session_state.selected_subgroups = []
+if "selected_subgroup_ids" not in st.session_state:
+    st.session_state.selected_subgroup_ids = []
+if "selected_subgroup_labels" not in st.session_state:
+    st.session_state.selected_subgroup_labels = []
 if "selected_nice_classes" not in st.session_state:
     st.session_state.selected_nice_classes = []
 if "selected_similarity_codes" not in st.session_state:
     st.session_state.selected_similarity_codes = []
 if "recommended_similarity_codes" not in st.session_state:
     st.session_state.recommended_similarity_codes = []
+if "derived_nice_classes" not in st.session_state:
+    st.session_state.derived_nice_classes = []
+if "derived_similarity_codes" not in st.session_state:
+    st.session_state.derived_similarity_codes = []
+if "candidate_similarity_codes" not in st.session_state:
+    st.session_state.candidate_similarity_codes = []
+if "similarity_match_details" not in st.session_state:
+    st.session_state.similarity_match_details = []
+if "subgroup_keywords" not in st.session_state:
+    st.session_state.subgroup_keywords = []
+if "search_terms_for_prior_marks" not in st.session_state:
+    st.session_state.search_terms_for_prior_marks = []
+if "selected_scope_summary" not in st.session_state:
+    st.session_state.selected_scope_summary = {}
 if "selected_keywords" not in st.session_state:
     st.session_state.selected_keywords = []
 if "field_inputs" not in st.session_state:
@@ -774,7 +1389,21 @@ def render_steps(current: int) -> None:
     st.markdown(html, unsafe_allow_html=True)
 
 
-render_steps(st.session_state.step)
+def render_user_steps(current: int) -> None:
+    steps = ["① 상표명", "② 상품범위", "③ 검토", "④ 결과", "⑤ 개선방안"]
+    html = '<div class="step-bar">'
+    for index, label in enumerate(steps, 1):
+        if index < current:
+            html += f'<span class="step-done">✓ {label}</span>'
+        elif index == current:
+            html += f'<span class="step-active">{label}</span>'
+        else:
+            html += f'<span class="step-todo">{label}</span>'
+    html += "</div>"
+    st.markdown(html, unsafe_allow_html=True)
+
+
+render_user_steps(st.session_state.step)
 st.markdown("---")
 
 
@@ -842,7 +1471,7 @@ if st.session_state.step == 1:
         st.error("상표명을 입력해주세요!")
 
 elif st.session_state.step == 2:
-    render_step2()
+    render_scope_step()
 
 elif False and st.session_state.step == 2:
     coverage = validate_catalog_coverage()
@@ -1235,6 +1864,9 @@ elif st.session_state.step == 2 and False:
         st.rerun()
 
 elif st.session_state.step == 3:
+    render_review_step()
+
+elif st.session_state.step == 3 and False:
     selected_fields = current_selected_fields()
     st.markdown("## 선택한 상품군별로 구체 상품/서비스와 유사군코드를 정하세요")
     st.markdown(
@@ -1489,11 +2121,13 @@ elif st.session_state.step == 4:
 
         for index, field in enumerate(selected_fields, start=1):
             config = get_field_input(field)
+            field_scope = derive_field_scope(field)
+            derived_codes = field_scope.get("derived_similarity_codes", [])
             status.markdown(f"🔎 {field_label(field)} KIPRIS 선행상표 검색 및 분석 중... ({index}/{total_fields})")
             all_results = []
             used_real_search = False
 
-            for code in config.get("selected_codes", []):
+            for code in derived_codes:
                 result = search_all_pages(st.session_state.trademark_name, similar_goods_code=code, max_pages=3)
                 if result and result.get("items"):
                     all_results.extend([{**item, "queried_codes": [code]} for item in result["items"]])
@@ -1511,8 +2145,8 @@ elif st.session_state.step == 4:
                 trademark_name=st.session_state.trademark_name,
                 trademark_type=st.session_state.trademark_type,
                 is_coined=st.session_state.is_coined,
-                selected_classes=field.get("nice_classes", [field["class_no"]]),
-                selected_codes=config.get("selected_codes", []),
+                selected_classes=field_scope.get("derived_nice_classes", field.get("nice_classes", [field["class_no"]])),
+                selected_codes=derived_codes,
                 prior_items=all_results,
                 selected_fields=[field],
                 specific_product=config.get("specific_product", ""),
@@ -1522,11 +2156,17 @@ elif st.session_state.step == 4:
                     **field_analysis,
                     "field": field,
                     "specific_product": config.get("specific_product", ""),
-                    "selected_codes": list(config.get("selected_codes", [])),
+                    "selected_group_id": field.get("group_id"),
+                    "selected_subgroup_ids": [field.get("field_id", "")],
+                    "selected_codes": list(derived_codes),
+                    "selected_similarity_codes": list(derived_codes),
+                    "selected_nice_classes": field_scope.get("derived_nice_classes", field.get("nice_classes", [])),
+                    "selected_keywords": field_scope.get("subgroup_keywords", field.get("keywords", [])),
+                    "search_terms_for_prior_marks": field_scope.get("search_terms_for_prior_marks", []),
                     "search_source": "실제 KIPRIS 데이터" if used_real_search else "Mock 데이터 또는 제한 조회",
                     "improvements": get_improvements(
                         st.session_state.trademark_name,
-                        config.get("selected_codes", []),
+                        derived_codes,
                         field_analysis.get("included_priors", []),
                         field_analysis.get("score", 0),
                     ),
@@ -1547,6 +2187,7 @@ elif st.session_state.step == 4:
     field_reports = analysis.get("field_reports", [])
     st.markdown(f"## **'{st.session_state.trademark_name}'** 등록 가능성 검토 결과")
     st.markdown("### 선택한 상품군별로 따로 판단한 결과입니다.")
+    st.caption("유사군코드는 상품유사군코드.xlsx를 기준으로 자동 도출한 실제 예규 코드만 표시합니다.")
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:

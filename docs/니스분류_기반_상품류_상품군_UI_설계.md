@@ -1,111 +1,124 @@
 # 니스분류 기반 상품류/상품군 UI 설계
 
-## 1. 문서 목적
-이 문서는 상품 선택 UI와 내부 저장 구조의 source of truth다.
-상품류/상품군 데이터의 최상위 기준은 `docs/지식재산처_상품분류_니스분류.xlsx`다.
-`nice_class_catalog.json`, `nice_group_catalog.json`은 이 엑셀을 기반으로 생성되는 캐시다.
+## 1. 목적
+Step 2 상품범위 선택 화면은 아래 사용자 흐름만 제공한다.
 
-## 2. 기본 UX
+1. 분류 1 선택
+2. 분류 2 선택
+3. 구체상품군 선택
+4. 검토 실행
+5. 결과
+6. 개선방안
 
-### 2-1. 분류 1
-사용자는 먼저 아래 중 하나를 선택한다.
-- 제품(제품, 브랜드)
-- 서비스(상호, 서비스)
+사용자에게 유사군코드를 다시 고르게 하지 않는다. 유사군코드는 시스템 내부 파생값으로만 사용한다.
 
-### 2-2. 분류 2
-- 분류 2는 요약형 UI 카테고리다.
-- 이 단계에서는 짧은 카테고리명만 보여준다.
-- 긴 니스류 설명, class_heading 전문, 상품군 전체 목록은 이 화면에 노출하지 않는다.
-- 카드에는 아래만 보여준다.
-- `group_label`
-- `group_hint`
-- `연결 니스류: 제OO류`
+데이터 source of truth는 아래로 고정한다.
 
-예시:
-- 제품: 패션의류/잡화, 뷰티, 식품, 가구/인테리어, 생활/건강, 소프트웨어
-- 서비스: 요식업/식품, 뷰티/미용, 교육/유아/반려동물, IT/플랫폼/APP, 기타 서비스
+- 구체상품군/니스류: `docs/지식재산처_상품분류_니스분류.xlsx`
+- 유사군코드: `docs/상품유사군코드.xlsx`
 
-### 2-3. 구체상품군 선택
-- 분류 2를 선택한 뒤 `구체상품군 선택 단계로 이동` 버튼을 눌러 별도 단계로 들어간다.
-- 이 단계의 제목은 `3. 구체상품군 선택`을 사용한다.
-- 설명 문구는 `선택한 카테고리에 해당하는 상품군을 선택하세요`를 사용한다.
-- 여기서만 실제 `subgroup_label` 목록을 보여준다.
-- 상품군은 복수 선택 가능하다.
+## 2. 상태 머신
+- `step_main = 2`
+- `step_scope_sub = "group" | "subgroup" | "review_ready"`
 
-### 2-4. 다음 버튼 활성화 조건
-- 분류 1 선택 전: 다음 버튼 비활성화
-- 분류 2 선택 전: `구체상품군 선택 단계로 이동` 버튼 비활성화
-- 분류 2 선택 완료 후: `구체상품군 선택 단계로 이동` 버튼 활성화
-- 구체상품군 미선택 상태: `다음 단계: 구체 상품/서비스의 유사군코드 선택` 버튼 비활성화
-- 구체상품군 1개 이상 선택 후: 위 버튼 활성화
+필수 상태값은 아래와 같다.
 
-## 3. 데이터 구조
-
-### 3-1. `nice_class_catalog.json`
-`docs/지식재산처_상품분류_니스분류.xlsx` 기반으로 제1류~제45류 전체를 포함한다.
-각 항목은 최소 아래 필드를 가진다.
-- `kind`
-- `nice_class_no`
-- `nice_class_label`
-- `class_heading`
-- `source: excel`
-
-### 3-2. `nice_group_catalog.json`
-goods/services 각각에 대해 요약형 UI 카테고리와 하위 상품군을 정의한다.
-각 그룹은 최소 아래 필드를 가진다.
-- `kind`
-- `group_id`
-- `group_label`
-- `group_hint`
-- `classes`
-- `subgroups`
-- `source: excel`
-
-각 `subgroup`는 최소 아래 필드를 가진다.
-- `kind`
-- `group_id`
-- `group_label`
-- `subgroup_id`
-- `subgroup_label`
-- `nice_classes`
-- `keywords`
-- `similarity_codes`
-- `class_heading`
-- `source: excel`
-
-## 4. 내부 저장 필드
-선택 결과는 아래 구조로 정규화한다.
 - `selected_kind`
-- `selected_group`
-- `selected_groups`
+- `selected_group_id`
+- `selected_group_label`
+- `selected_subgroup_ids`
+- `selected_subgroup_labels`
+- `derived_nice_classes`
+- `derived_similarity_codes`
+- `subgroup_keywords`
+
+레거시 호환용으로 `selected_group`, `selected_groups`, `selected_subgroups`를 유지할 수는 있지만, Step 전환 판단의 기준은 아래 새 상태값이다.
+
+## 3. 분류 2 저장 규칙
+분류 2 카테고리 클릭 시 즉시 아래 값이 `session_state`에 저장되어야 한다.
+
+- `selected_group_id`
+- `selected_group_label`
+- `step_scope_sub = "group"`
+
+중요 규칙:
+
+- 분류 2 선택 직후 rerun 되어도 `selected_group_id`는 지워지면 안 된다.
+- 하위 `selected_subgroup_ids`를 비우더라도 `selected_group_id`는 유지해야 한다.
+- `selected_group` 같은 레거시 키는 필요하면 alias로만 유지한다.
+
+## 4. 버튼 활성화 조건
+`구체상품군 선택 단계로 이동` 버튼 활성화 조건은 아래 두 가지만 본다.
+
+- `selected_kind` 존재
+- `selected_group_id` 존재
+
+아래 값들은 이 버튼 활성화 조건에 사용하지 않는다.
+
+- `selected_codes`
+- `selected_fields`
+- `field_inputs`
+- 기타 레거시 유사군코드 관련 값
+
+## 5. Step 3 렌더링 조건
+Step 3은 별도 화면처럼 보이게 렌더링한다.
+
+- 제목: `3. 구체상품군 선택`
+- 설명: `선택한 카테고리에 해당하는 상품군을 1개 이상 선택하세요`
+
+렌더링 조건:
+
+- `step_scope_sub in {"subgroup", "review_ready"}`
+- `selected_kind` 존재
+- `selected_group_id` 존재
+
+즉, `selected_codes`가 비어 있어도 Step 3 렌더링을 막지 않는다.
+
+## 6. 구체상품군 선택 완료 규칙
+Step 3에서 구체상품군을 1개 이상 선택하면 아래가 계산되어야 한다.
+
+- `selected_subgroup_ids`
+- `selected_subgroup_labels`
+- `derived_nice_classes`
+- `derived_similarity_codes`
+- `subgroup_keywords`
+- `step_scope_sub = "review_ready"`
+
+검토 실행 가능 조건은 `selected_subgroup_ids`가 1개 이상 존재하는지로 판단한다.
+
+## 7. 유사군코드 처리 원칙
+유사군코드는 사용자 입력 단계가 아니다.
+
+- 사용자 선택 기준: `selected_subgroup_ids`
+- 시스템 파생 기준: `derived_similarity_codes`
+- subgroup별 매핑은 `상품유사군코드.xlsx` 기준 실제 예규 코드만 사용한다.
+- 가상코드(`S3601`, `S3602`, `S3603`)와 클래스 번호 문자열 조합식 코드는 금지한다.
+
+자동 매핑 순서는 아래와 같다.
+
+1. `exact_label_match`
+2. `normalized_semantic_match`
+3. `keyword_dictionary_match`
+4. `same_class_fallback`
+
+표시 원칙:
+
+- Step 2/Step 3에서는 필요 시 `내부 도출 유사군코드`로만 참고 표시 가능
+- 사용자-facing 단계명에 `유사군코드 선택`을 넣지 않음
+- Step 3 완료 후에는 별도 코드 선택 화면 없이 바로 `검토 실행`으로 이동한다.
+
+## 8. 디버그 표시
+개발용 디버그 표시는 아래 값을 확인할 수 있어야 한다.
+
+- `selected_kind`
+- `selected_group_id`
+- `step_scope_sub`
+- `len(selected_subgroup_ids)`
 - `selected_subgroups`
-- `selected_nice_classes`
-- `selected_similarity_codes`
-- `recommended_similarity_codes`
-- `selected_keywords`
-- `specific_product_text`
+- `candidate_similarity_codes`
+- `chosen_similarity_codes`
+- `match_reason`
+- `match_confidence`
+- `fallback_used`
 
-저장 원칙은 아래와 같다.
-- `selected_group`은 현재 화면에서 열어둔 요약형 카테고리다.
-- `selected_groups`는 실제로 선택한 subgroup가 속한 UI 카테고리 라벨 목록이다.
-- `selected_subgroups`는 실제로 선택한 구체상품군 라벨 목록이다.
-- `selected_nice_classes`는 subgroup에 연결된 실제 니스류 번호 목록이다.
-- `selected_similarity_codes`는 Step 3에서 사용자가 확정한 유사군코드 목록이다.
-
-## 5. 모바일 우선 UX 원칙
-- 한 단계에 한 종류의 선택만 하게 한다.
-- 카드/칩 간격을 일정하게 유지한다.
-- 긴 문단을 카드 안에 넣지 않는다.
-- 선택 시 버튼과 카드 상태를 명확히 구분한다.
-- 2~3열 grid는 허용하지만 카드 높이는 가급적 균일하게 유지한다.
-- 선택 요약은 별도 영역으로 분리한다.
-
-## 6. 분석 엔진 연결 방식
-화면은 요약형이지만 내부 판단 입력은 정교하게 유지한다.
-- `selected_subgroups` -> 구체 상품군 문맥
-- `selected_nice_classes` -> 상품 유사성 1차 필터
-- `selected_similarity_codes` -> 유사군코드 기반 필터
-- `selected_kind` -> goods/services 구분
-- `selected_keywords` -> 보조 추천과 예외 검토
-
-즉 분류 2는 UI 카테고리일 뿐이고, 실제 판단의 시작점은 subgroup/nice class/similarity code다.
+버그 수정 완료 후에도 숨김 expander 형태로 유지 가능하다.

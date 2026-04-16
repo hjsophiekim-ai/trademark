@@ -29,6 +29,10 @@
             "합금"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             14
           ],
@@ -51,6 +55,10 @@
             "반귀석"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             14
           ],
@@ -70,6 +78,10 @@
             "귀금속 및 그 합금; 보석, 귀석 및 반귀석; 시계용구"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             14
           ],
@@ -91,6 +103,10 @@
             "모조가죽"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             18
           ],
@@ -110,6 +126,10 @@
             "가죽 및 모조가죽; 수피; 수하물가방 및 운반용 가방; 우산 및 파라솔; 걷기용 지팡이; 채찍 및 마구(馬具); 동물용 목걸이, 가죽끈 및 의류"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             18
           ],
@@ -132,6 +152,10 @@
             "가방"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             18
           ],
@@ -153,6 +177,10 @@
             "파라솔"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             18
           ],
@@ -174,6 +202,10 @@
             "지팡이"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             18
           ],
@@ -196,6 +228,10 @@
             "馬具"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             18
           ],
@@ -220,6 +256,10 @@
             "의류"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             18
           ],
@@ -241,9 +281,14 @@
             "모자"
           ],
           "similarity_codes": [
-            "G4503",
-            "G450101"
+            "G4503"
           ],
+          "candidate_similarity_codes": [
+            "G4503"
+          ],
+          "similarity_match_reason": "keyword_dictionary_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             25
           ],
@@ -268,7 +313,15 @@
             "리본",
             "나비매듭리본"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G4902"
+          ],
+          "candidate_similarity_codes": [
+            "G4902"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             26
           ],
@@ -294,6 +347,10 @@
             "바늘"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             26
           ],
@@ -314,7 +371,15 @@
             "조화",
             "造花"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G4512"
+          ],
+          "candidate_similarity_codes": [
+            "G4512"
+          ],
+          "similarity_match_reason": "exact_label_match",
+          "similarity_match_confidence": "exact",
+          "similarity_fallback_used": false,
           "nice_classes": [
             26
           ],
@@ -334,6 +399,10 @@
             "레이스 및 자수포, 의류장식용 리본 및 나비매듭리본; 단추, 훅 및 아이(hooks and eyes), 핀 및 바늘; 조화(造花); 머리장식품; 가발"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             26
           ],
@@ -353,6 +422,10 @@
             "레이스 및 자수포, 의류장식용 리본 및 나비매듭리본; 단추, 훅 및 아이(hooks and eyes), 핀 및 바늘; 조화(造花); 머리장식품; 가발"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             26
           ],
@@ -390,9 +463,15 @@
             "세면용품"
           ],
           "similarity_codes": [
+            "G1201"
+          ],
+          "candidate_similarity_codes": [
             "G1201",
             "G1202"
           ],
+          "similarity_match_reason": "exact_label_match",
+          "similarity_match_confidence": "exact",
+          "similarity_fallback_used": false,
           "nice_classes": [
             3
           ],
@@ -413,10 +492,11 @@
             "비의료용",
             "치약"
           ],
-          "similarity_codes": [
-            "G1201",
-            "G1202"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             3
           ],
@@ -436,9 +516,15 @@
             "비의료용 화장품 및 세면용품; 비의료용 치약; 향수; 표백제 및 기타 세탁용 제제; 세정/광택 및 연마재"
           ],
           "similarity_codes": [
-            "G1201",
             "G1202"
           ],
+          "candidate_similarity_codes": [
+            "G1202",
+            "G1201"
+          ],
+          "similarity_match_reason": "keyword_dictionary_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             3
           ],
@@ -480,6 +566,10 @@
             "엽조수"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             29
           ],
@@ -501,6 +591,10 @@
             "고기진액"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             29
           ],
@@ -528,6 +622,10 @@
             "해초"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             29
           ],
@@ -549,6 +647,10 @@
             "콤폿"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             29
           ],
@@ -567,7 +669,15 @@
             "달걀",
             "식육, 생선, 가금 및 엽조수; 요리용 고기진액; 보존처리/냉동/건조 및 조리된 과일, 채소 및 해초; 젤리, 잼, 콤폿; 달걀; 우유, 치즈, 버터, 요구르트 및 기타 유제품; 식용 유지(油脂)"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G0702"
+          ],
+          "candidate_similarity_codes": [
+            "G0702"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             29
           ],
@@ -593,6 +703,10 @@
             "유제품"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             29
           ],
@@ -614,7 +728,15 @@
             "유지",
             "油脂"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G0705"
+          ],
+          "candidate_similarity_codes": [
+            "G0705"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "medium",
+          "similarity_fallback_used": false,
           "nice_classes": [
             29
           ],
@@ -636,9 +758,11 @@
             "코코아",
             "대용물"
           ],
-          "similarity_codes": [
-            "G3001"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             30
           ],
@@ -660,8 +784,14 @@
             "국수"
           ],
           "similarity_codes": [
-            "G3001"
+            "G020101"
           ],
+          "candidate_similarity_codes": [
+            "G020101"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             30
           ],
@@ -683,9 +813,11 @@
             "사고",
             "sago"
           ],
-          "similarity_codes": [
-            "G3001"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             30
           ],
@@ -708,8 +840,14 @@
             "조제품"
           ],
           "similarity_codes": [
-            "G3001"
+            "G020101"
           ],
+          "candidate_similarity_codes": [
+            "G020101"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             30
           ],
@@ -730,9 +868,11 @@
             "페이스트리",
             "과자"
           ],
-          "similarity_codes": [
-            "G3001"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             30
           ],
@@ -752,8 +892,14 @@
             "커피, 차(茶), 코코아 및 그 대용물; 쌀, 파스타 및 국수; 타피오카 및 사고(sago); 곡분 및 곡물 조제품; 빵, 페이스트리 및 과자; 초콜릿; 아이스크림, 셔벗 및 기타 식용 얼음; 설탕, 꿀, 당밀(糖蜜); 식품용 이스트, 베이킹 파우더; 소금, 조미료, 향신료, 보존처리된 허브; 식초, 소스 및 기타 조미료; 얼음"
           ],
           "similarity_codes": [
-            "G3001"
+            "G0502"
           ],
+          "candidate_similarity_codes": [
+            "G0502"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             30
           ],
@@ -777,9 +923,11 @@
             "식용",
             "얼음"
           ],
-          "similarity_codes": [
-            "G3001"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             30
           ],
@@ -801,9 +949,11 @@
             "당밀",
             "糖蜜"
           ],
-          "similarity_codes": [
-            "G3001"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             30
           ],
@@ -827,9 +977,11 @@
             "베이킹",
             "파우더"
           ],
-          "similarity_codes": [
-            "G3001"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             30
           ],
@@ -853,9 +1005,11 @@
             "보존처리된",
             "허브"
           ],
-          "similarity_codes": [
-            "G3001"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             30
           ],
@@ -878,9 +1032,11 @@
             "기타",
             "조미료"
           ],
-          "similarity_codes": [
-            "G3001"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             30
           ],
@@ -899,9 +1055,11 @@
             "얼음",
             "커피, 차(茶), 코코아 및 그 대용물; 쌀, 파스타 및 국수; 타피오카 및 사고(sago); 곡분 및 곡물 조제품; 빵, 페이스트리 및 과자; 초콜릿; 아이스크림, 셔벗 및 기타 식용 얼음; 설탕, 꿀, 당밀(糖蜜); 식품용 이스트, 베이킹 파우더; 소금, 조미료, 향신료, 보존처리된 허브; 식초, 소스 및 기타 조미료; 얼음"
           ],
-          "similarity_codes": [
-            "G3001"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             30
           ],
@@ -921,6 +1079,10 @@
             "맥주; 비알코올성 음료; 광천수 및 탄산수; 과실음료 및 과실주스; 시럽 및 비알코올성 음료용 제제"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             32
           ],
@@ -942,6 +1104,10 @@
             "음료"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             32
           ],
@@ -962,7 +1128,15 @@
             "광천수",
             "탄산수"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G0503"
+          ],
+          "candidate_similarity_codes": [
+            "G0503"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             32
           ],
@@ -983,7 +1157,15 @@
             "과실음료",
             "과실주스"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G0503"
+          ],
+          "candidate_similarity_codes": [
+            "G0503"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             32
           ],
@@ -1007,6 +1189,10 @@
             "제제"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             32
           ],
@@ -1030,6 +1216,10 @@
             "제외"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             33
           ],
@@ -1052,6 +1242,10 @@
             "제제"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             33
           ],
@@ -1073,6 +1267,10 @@
             "대용담배"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             34
           ],
@@ -1094,6 +1292,10 @@
             "여송연"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             34
           ],
@@ -1117,6 +1319,10 @@
             "기화기"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             34
           ],
@@ -1136,6 +1342,10 @@
             "담배 및 대용담배; 권연 및 여송연; 흡연자용 전자담배 및 기화기; 흡연용구; 성냥"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             34
           ],
@@ -1155,6 +1365,10 @@
             "담배 및 대용담배; 권연 및 여송연; 흡연자용 전자담배 및 기화기; 흡연용구; 성냥"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             34
           ],
@@ -1191,6 +1405,10 @@
             "수송기계기구; 육상, 항공 또는 해상을 통해 이동하는 수송수단"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             12
           ],
@@ -1216,6 +1434,10 @@
             "수송수단"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             12
           ],
@@ -1237,6 +1459,10 @@
             "火器"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             13
           ],
@@ -1258,6 +1484,10 @@
             "발사체"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             13
           ],
@@ -1277,6 +1507,10 @@
             "화기(火器); 탄약 및 발사체; 폭약; 폭죽"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             13
           ],
@@ -1296,6 +1530,10 @@
             "화기(火器); 탄약 및 발사체; 폭약; 폭죽"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             13
           ],
@@ -1317,6 +1555,10 @@
             "노끈"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             22
           ],
@@ -1336,6 +1578,10 @@
             "로프 및 노끈; 망(網); 텐트 및 타폴린; 직물제 또는 합성재료제 차양; 돛; 하역물운반용 및 보관용 포대; 충전재료(고무/플라스틱/종이 및 판지제는 제외); 직물용 미가공 섬유 및 그 대용품"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             22
           ],
@@ -1357,6 +1603,10 @@
             "타폴린"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             22
           ],
@@ -1379,6 +1629,10 @@
             "차양"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             22
           ],
@@ -1397,6 +1651,10 @@
             "로프 및 노끈; 망(網); 텐트 및 타폴린; 직물제 또는 합성재료제 차양; 돛; 하역물운반용 및 보관용 포대; 충전재료(고무/플라스틱/종이 및 판지제는 제외); 직물용 미가공 섬유 및 그 대용품"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             22
           ],
@@ -1419,6 +1677,10 @@
             "포대"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             22
           ],
@@ -1445,6 +1707,10 @@
             "제외"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             22
           ],
@@ -1469,6 +1735,10 @@
             "대용품"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             22
           ],
@@ -1488,6 +1758,10 @@
             "오락용구, 장난감; 비디오게임장치; 체조 및 스포츠용품; 크리스마스트리용 장식품"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             28
           ],
@@ -1509,6 +1783,10 @@
             "스포츠용품"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             28
           ],
@@ -1529,7 +1807,15 @@
             "크리스마스트리용",
             "장식품"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G2602"
+          ],
+          "candidate_similarity_codes": [
+            "G2602"
+          ],
+          "similarity_match_reason": "exact_label_match",
+          "similarity_match_confidence": "exact",
+          "similarity_fallback_used": false,
           "nice_classes": [
             28
           ],
@@ -1572,6 +1858,10 @@
             "유아용"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             5
           ],
@@ -1595,6 +1885,10 @@
             "용품"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             10
           ],
@@ -1615,7 +1909,15 @@
             "오락용구",
             "장난감"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G4302"
+          ],
+          "candidate_similarity_codes": [
+            "G4302"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             28
           ],
@@ -1656,6 +1958,10 @@
             "건축재료"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             19
           ],
@@ -1679,6 +1985,10 @@
             "硬質管"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             19
           ],
@@ -1702,6 +2012,10 @@
             "역청"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             19
           ],
@@ -1724,6 +2038,10 @@
             "건축물"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             19
           ],
@@ -1745,6 +2063,10 @@
             "기념물"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             19
           ],
@@ -1767,9 +2089,14 @@
             "액자"
           ],
           "similarity_codes": [
-            "G2001",
-            "G2002"
+            "G2601"
           ],
+          "candidate_similarity_codes": [
+            "G2601"
+          ],
+          "similarity_match_reason": "exact_label_match",
+          "similarity_match_confidence": "exact",
+          "similarity_fallback_used": false,
           "nice_classes": [
             20
           ],
@@ -1792,10 +2119,11 @@
             "비금속제",
             "컨테이너"
           ],
-          "similarity_codes": [
-            "G2001",
-            "G2002"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             20
           ],
@@ -1820,10 +2148,11 @@
             "나전",
             "螺鈿"
           ],
-          "similarity_codes": [
-            "G2001",
-            "G2002"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             20
           ],
@@ -1842,10 +2171,11 @@
             "패각",
             "가구, 거울, 액자; 보관 또는 운송용 비금속제 컨테이너; 미가공 또는 반가공 뼈, 뿔, 고래수염 또는 나전(螺鈿); 패각; 해포석(海泡石); 호박(琥珀)(원석)"
           ],
-          "similarity_codes": [
-            "G2001",
-            "G2002"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             20
           ],
@@ -1866,10 +2196,11 @@
             "해포석",
             "海泡石"
           ],
-          "similarity_codes": [
-            "G2001",
-            "G2002"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             20
           ],
@@ -1891,10 +2222,11 @@
             "琥珀",
             "원석"
           ],
-          "similarity_codes": [
-            "G2001",
-            "G2002"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             20
           ],
@@ -1916,6 +2248,10 @@
             "직물대용품"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             24
           ],
@@ -1937,6 +2273,10 @@
             "린넨"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             24
           ],
@@ -1959,6 +2299,10 @@
             "커튼"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             24
           ],
@@ -1984,7 +2328,15 @@
             "바닥깔개용",
             "재료"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G2602"
+          ],
+          "candidate_similarity_codes": [
+            "G2602"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             27
           ],
@@ -2006,6 +2358,10 @@
             "벽걸이"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             27
           ],
@@ -2046,9 +2402,15 @@
             "제제"
           ],
           "similarity_codes": [
-            "G1201",
-            "G1202"
+            "G1001"
           ],
+          "candidate_similarity_codes": [
+            "G1001",
+            "G1201"
+          ],
+          "similarity_match_reason": "exact_label_match",
+          "similarity_match_confidence": "exact",
+          "similarity_fallback_used": false,
           "nice_classes": [
             3
           ],
@@ -2071,10 +2433,11 @@
             "광택",
             "연마재"
           ],
-          "similarity_codes": [
-            "G1201",
-            "G1202"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             3
           ],
@@ -2098,6 +2461,10 @@
             "제제"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             5
           ],
@@ -2119,6 +2486,10 @@
             "위생제"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             5
           ],
@@ -2141,6 +2512,10 @@
             "식이보충제"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             5
           ],
@@ -2163,6 +2538,10 @@
             "재료"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             5
           ],
@@ -2186,6 +2565,10 @@
             "왁스"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             5
           ],
@@ -2204,7 +2587,15 @@
             "소독제",
             "약제, 의료용 및 동물의료용 제제; 의료용 위생제; 의료용 또는 동물의료용 식이요법 식품 및 제제, 유아용 식품; 인체용 및 동물용 식이보충제; 반창고, 외상치료용 재료; 치과용 충전재료, 치과용 왁스; 소독제; 해충구제제; 살균제, 제초제"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G1004"
+          ],
+          "candidate_similarity_codes": [
+            "G1004"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             5
           ],
@@ -2223,7 +2614,15 @@
             "해충구제제",
             "약제, 의료용 및 동물의료용 제제; 의료용 위생제; 의료용 또는 동물의료용 식이요법 식품 및 제제, 유아용 식품; 인체용 및 동물용 식이보충제; 반창고, 외상치료용 재료; 치과용 충전재료, 치과용 왁스; 소독제; 해충구제제; 살균제, 제초제"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G1004"
+          ],
+          "candidate_similarity_codes": [
+            "G1004"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "medium",
+          "similarity_fallback_used": false,
           "nice_classes": [
             5
           ],
@@ -2245,6 +2644,10 @@
             "제초제"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             5
           ],
@@ -2269,6 +2672,10 @@
             "기계기구"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             10
           ],
@@ -2295,6 +2702,10 @@
             "義齒"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             10
           ],
@@ -2317,6 +2728,10 @@
             "선글라스"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             10
           ],
@@ -2336,6 +2751,10 @@
             "외과용, 내과용, 치과용 및 수의과용 기계기구; 의지(義肢), 의안(義眼) 및 의치(義齒); 안경, 콘택트렌즈 및 선글라스; 정형외과용품; 봉합용 재료; 장애인용 치료 및 재활보조장치; 안마기; 유아수유용 기기 및 용품; 성활동용 기기 및 용품"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             10
           ],
@@ -2357,6 +2776,10 @@
             "재료"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             10
           ],
@@ -2380,6 +2803,10 @@
             "재활보조장치"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             10
           ],
@@ -2399,6 +2826,10 @@
             "외과용, 내과용, 치과용 및 수의과용 기계기구; 의지(義肢), 의안(義眼) 및 의치(義齒); 안경, 콘택트렌즈 및 선글라스; 정형외과용품; 봉합용 재료; 장애인용 치료 및 재활보조장치; 안마기; 유아수유용 기기 및 용품; 성활동용 기기 및 용품"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             10
           ],
@@ -2422,6 +2853,10 @@
             "용품"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             10
           ],
@@ -2446,6 +2881,10 @@
             "용기"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             21
           ],
@@ -2472,6 +2911,10 @@
             "제외"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             21
           ],
@@ -2492,6 +2935,10 @@
             "스펀지"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             21
           ],
@@ -2513,7 +2960,15 @@
             "솔은",
             "제외"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G1302"
+          ],
+          "candidate_similarity_codes": [
+            "G1302"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             21
           ],
@@ -2535,6 +2990,10 @@
             "재료"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             21
           ],
@@ -2553,7 +3012,15 @@
             "청소용구",
             "가정용 또는 주방용 기구 및 용기; 조리기구 및 식기(포크, 나이프 및 스푼은 제외); 빗 및 스펀지; 솔(페인트 솔은 제외); 솔 제조용 재료; 청소용구; 비건축용 미가공 또는 반가공 유리; 유리제품, 도자기제품 및 토기제품"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G1401"
+          ],
+          "candidate_similarity_codes": [
+            "G1401"
+          ],
+          "similarity_match_reason": "exact_label_match",
+          "similarity_match_confidence": "exact",
+          "similarity_fallback_used": false,
           "nice_classes": [
             21
           ],
@@ -2578,6 +3045,10 @@
             "유리"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             21
           ],
@@ -2600,6 +3071,10 @@
             "토기제품"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             21
           ],
@@ -2650,11 +3125,11 @@
             "교육용",
             "기기"
           ],
-          "similarity_codes": [
-            "G390802",
-            "G0901",
-            "G0903"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             9
           ],
@@ -2685,11 +3160,11 @@
             "위한",
             "기기"
           ],
-          "similarity_codes": [
-            "G390802",
-            "G0901",
-            "G0903"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             9
           ],
@@ -2718,11 +3193,11 @@
             "장치",
             "기구"
           ],
-          "similarity_codes": [
-            "G390802",
-            "G0901",
-            "G0903"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             9
           ],
@@ -2743,11 +3218,11 @@
             "동전작동식",
             "기계장치"
           ],
-          "similarity_codes": [
-            "G390802",
-            "G0901",
-            "G0903"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             9
           ],
@@ -2768,11 +3243,11 @@
             "금전등록기",
             "계산기"
           ],
-          "similarity_codes": [
-            "G390802",
-            "G0901",
-            "G0903"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             9
           ],
@@ -2799,11 +3274,11 @@
             "장갑",
             "호흡장치"
           ],
-          "similarity_codes": [
-            "G390802",
-            "G0901",
-            "G0903"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             9
           ],
@@ -2823,10 +3298,14 @@
             "과학, 연구, 항법, 측량, 사진, 영화, 시청각, 광학, 계량, 측정, 신호, 탐지, 시험, 검사, 구명 및 교육용 기기; 전기 분배 또는 전기 사용의 전도, 전환, 변형, 축적, 조절 또는 통제를 위한 기기; 음향/영상 또는 데이터의 기록/전송/재생 또는 처리용 장치 및 기구; 기록 및 내려받기 가능한 멀티미디어 파일, 컴퓨터 소프트웨어, 빈 디지털 또는 아날로그 기록 및 저장매체; 동전작동식 기계장치; 금전등록기, 계산기; 컴퓨터 및 컴퓨터주변기기; 잠수복, 잠수마스크, 잠수용 귀마개, 다이빙용 노즈클립, 잠수용 장갑, 잠수용 호흡장치; 소화기기"
           ],
           "similarity_codes": [
-            "G390802",
-            "G0901",
-            "G0903"
+            "G3401"
           ],
+          "candidate_similarity_codes": [
+            "G3401"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "medium",
+          "similarity_fallback_used": false,
           "nice_classes": [
             9
           ],
@@ -2856,6 +3335,10 @@
             "설비"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             11
           ],
@@ -2892,6 +3375,10 @@
             "악기; 악보대 및 악기용 받침대; 지휘봉"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             15
           ],
@@ -2914,6 +3401,10 @@
             "받침대"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             15
           ],
@@ -2933,6 +3424,10 @@
             "악기; 악보대 및 악기용 받침대; 지휘봉"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             15
           ],
@@ -2954,6 +3449,10 @@
             "판지"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             16
           ],
@@ -2973,6 +3472,10 @@
             "종이 및 판지; 인쇄물; 제본재료; 사진; 문방구 및 사무용품(가구는 제외); 문방구용 또는 가정용 접착제; 제도용구 및 미술용 재료; 회화용 솔; 교재; 포장용 플라스틱제 시트, 필름 및 가방; 인쇄활자, 프린팅블록"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             16
           ],
@@ -2992,6 +3495,10 @@
             "종이 및 판지; 인쇄물; 제본재료; 사진; 문방구 및 사무용품(가구는 제외); 문방구용 또는 가정용 접착제; 제도용구 및 미술용 재료; 회화용 솔; 교재; 포장용 플라스틱제 시트, 필름 및 가방; 인쇄활자, 프린팅블록"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             16
           ],
@@ -3010,7 +3517,16 @@
             "사진",
             "종이 및 판지; 인쇄물; 제본재료; 사진; 문방구 및 사무용품(가구는 제외); 문방구용 또는 가정용 접착제; 제도용구 및 미술용 재료; 회화용 솔; 교재; 포장용 플라스틱제 시트, 필름 및 가방; 인쇄활자, 프린팅블록"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G210101"
+          ],
+          "candidate_similarity_codes": [
+            "G210101",
+            "G2202"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             16
           ],
@@ -3034,6 +3550,10 @@
             "제외"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             16
           ],
@@ -3056,6 +3576,10 @@
             "접착제"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             16
           ],
@@ -3078,6 +3602,10 @@
             "재료"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             16
           ],
@@ -3098,6 +3626,10 @@
             "회화용"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             16
           ],
@@ -3117,6 +3649,10 @@
             "종이 및 판지; 인쇄물; 제본재료; 사진; 문방구 및 사무용품(가구는 제외); 문방구용 또는 가정용 접착제; 제도용구 및 미술용 재료; 회화용 솔; 교재; 포장용 플라스틱제 시트, 필름 및 가방; 인쇄활자, 프린팅블록"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             16
           ],
@@ -3142,6 +3678,10 @@
             "가방"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             16
           ],
@@ -3163,6 +3703,10 @@
             "프린팅블록"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             16
           ],
@@ -3182,6 +3726,10 @@
             "직물용"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             23
           ],
@@ -3208,6 +3756,10 @@
             "생산물"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             31
           ],
@@ -3231,6 +3783,10 @@
             "종자"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             31
           ],
@@ -3255,6 +3811,10 @@
             "허브"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             31
           ],
@@ -3277,7 +3837,15 @@
             "있는",
             "식물"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G0212"
+          ],
+          "candidate_similarity_codes": [
+            "G0212"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             31
           ],
@@ -3303,6 +3871,10 @@
             "곡물종자"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             31
           ],
@@ -3323,7 +3895,16 @@
             "살아있는",
             "동물"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G0212"
+          ],
+          "candidate_similarity_codes": [
+            "G0212",
+            "G0801"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "medium",
+          "similarity_fallback_used": false,
           "nice_classes": [
             31
           ],
@@ -3347,6 +3928,10 @@
             "음료"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             31
           ],
@@ -3366,6 +3951,10 @@
             "미가공 농업, 수산양식, 원예 및 임업 생산물; 미가공 곡물 및 종자; 신선한 과실 및 채소, 신선한 허브; 살아 있는 식물 및 꽃; 구근(球根), 모종 및 재배용 곡물종자; 살아있는 동물; 동물용 사료 및 음료; 맥아"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             31
           ],
@@ -3413,6 +4002,10 @@
             "화학제"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             1
           ],
@@ -3436,6 +4029,10 @@
             "플라스틱"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             1
           ],
@@ -3458,6 +4055,10 @@
             "조성물"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             1
           ],
@@ -3480,6 +4081,10 @@
             "조제"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             1
           ],
@@ -3501,6 +4106,10 @@
             "무두질제"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             1
           ],
@@ -3522,6 +4131,10 @@
             "접착제"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             1
           ],
@@ -3545,6 +4158,10 @@
             "충전제"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             1
           ],
@@ -3567,6 +4184,10 @@
             "비료"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             1
           ],
@@ -3589,7 +4210,15 @@
             "생물학적",
             "제제"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G1006"
+          ],
+          "candidate_similarity_codes": [
+            "G1006"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             1
           ],
@@ -3612,6 +4241,10 @@
             "래커"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             2
           ],
@@ -3634,6 +4267,10 @@
             "보존제"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             2
           ],
@@ -3655,6 +4292,10 @@
             "염료"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             2
           ],
@@ -3678,6 +4319,10 @@
             "잉크"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             2
           ],
@@ -3699,6 +4344,10 @@
             "천연수지"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             2
           ],
@@ -3725,6 +4374,10 @@
             "금속분"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             2
           ],
@@ -3749,6 +4402,10 @@
             "왁스"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             4
           ],
@@ -3768,6 +4425,10 @@
             "공업용 오일 및 그리스, 왁스; 윤활제; 먼지흡수제, 먼지습윤제 및 먼지흡착제; 연료 및 발광체; 조명용 양초 및 심지"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             4
           ],
@@ -3790,6 +4451,10 @@
             "먼지흡착제"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             4
           ],
@@ -3811,6 +4476,10 @@
             "발광체"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             4
           ],
@@ -3834,6 +4503,10 @@
             "심지"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             4
           ],
@@ -3857,6 +4530,10 @@
             "광석"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             6
           ],
@@ -3881,6 +4558,10 @@
             "재료"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             6
           ],
@@ -3903,6 +4584,10 @@
             "건축물"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             6
           ],
@@ -3927,6 +4612,10 @@
             "와이어"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             6
           ],
@@ -3946,6 +4635,10 @@
             "일반금속 및 그 합금, 광석; 금속제 건축 및 구축용 재료; 금속제 이동식 건축물; 비전기용 일반금속제 케이블 및 와이어; 소형금속제품; 저장 또는 운반용 금속제 용기; 금고"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             6
           ],
@@ -3969,6 +4662,10 @@
             "용기"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             6
           ],
@@ -3987,7 +4684,15 @@
             "금고",
             "일반금속 및 그 합금, 광석; 금속제 건축 및 구축용 재료; 금속제 이동식 건축물; 비전기용 일반금속제 케이블 및 와이어; 소형금속제품; 저장 또는 운반용 금속제 용기; 금고"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "G2601"
+          ],
+          "candidate_similarity_codes": [
+            "G2601"
+          ],
+          "similarity_match_reason": "exact_label_match",
+          "similarity_match_confidence": "exact",
+          "similarity_fallback_used": false,
           "nice_classes": [
             6
           ],
@@ -4010,6 +4715,10 @@
             "전동공구"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             7
           ],
@@ -4033,6 +4742,10 @@
             "제외"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             7
           ],
@@ -4059,6 +4772,10 @@
             "제외"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             7
           ],
@@ -4082,6 +4799,10 @@
             "제외"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             7
           ],
@@ -4103,6 +4824,10 @@
             "孵卵器"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             7
           ],
@@ -4122,6 +4847,10 @@
             "기계, 공작기계, 전동공구; 모터 및 엔진(육상차량용은 제외); 기계 커플링 및 전동장치 부품(육상차량용은 제외); 농기구(수동식 수공구는 제외); 부란기(孵卵器); 자동판매기"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             7
           ],
@@ -4145,6 +4874,10 @@
             "수동기구"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             8
           ],
@@ -4164,6 +4897,10 @@
             "수동식 수공구 및 수동기구; 커틀러리; 휴대 무기(화기는 제외); 면도기"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             8
           ],
@@ -4187,6 +4924,10 @@
             "제외"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             8
           ],
@@ -4206,6 +4947,10 @@
             "수동식 수공구 및 수동기구; 커틀러리; 휴대 무기(화기는 제외); 면도기"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             8
           ],
@@ -4237,6 +4982,10 @@
             "제품"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             17
           ],
@@ -4261,6 +5010,10 @@
             "수지"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             17
           ],
@@ -4284,6 +5037,10 @@
             "재료"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             17
           ],
@@ -4308,6 +5065,10 @@
             "호스"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             17
           ],
@@ -4352,10 +5113,15 @@
             "저장매체"
           ],
           "similarity_codes": [
-            "G390802",
-            "G0901",
-            "G0903"
+            "G390802"
           ],
+          "candidate_similarity_codes": [
+            "G390802",
+            "G390803"
+          ],
+          "similarity_match_reason": "exact_label_match",
+          "similarity_match_confidence": "exact",
+          "similarity_fallback_used": false,
           "nice_classes": [
             9
           ],
@@ -4377,10 +5143,15 @@
             "컴퓨터주변기기"
           ],
           "similarity_codes": [
-            "G390802",
-            "G0901",
-            "G0903"
+            "G390803"
           ],
+          "candidate_similarity_codes": [
+            "G390803",
+            "G390802"
+          ],
+          "similarity_match_reason": "exact_label_match",
+          "similarity_match_confidence": "exact",
+          "similarity_fallback_used": false,
           "nice_classes": [
             9
           ],
@@ -4416,8 +5187,14 @@
             "식음료제공서비스업; 임시숙박시설업"
           ],
           "similarity_codes": [
-            "S4301"
+            "S174399"
           ],
+          "candidate_similarity_codes": [
+            "S174399"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             43
           ],
@@ -4456,7 +5233,15 @@
             "위생",
             "미용업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S174499"
+          ],
+          "candidate_similarity_codes": [
+            "S174499"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             44
           ],
@@ -4489,7 +5274,15 @@
             "의료업",
             "의료업; 수의업; 인간 또는 동물을 위한 위생 및 미용업; 농업, 수산양식, 원예 및 임업 서비스업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S174499"
+          ],
+          "candidate_similarity_codes": [
+            "S174499"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             44
           ],
@@ -4513,7 +5306,15 @@
             "임업",
             "서비스업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S174499"
+          ],
+          "candidate_similarity_codes": [
+            "S174499"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             44
           ],
@@ -4547,7 +5348,15 @@
             "여행알선업",
             "운송업; 상품의 포장 및 보관업; 여행알선업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S173999"
+          ],
+          "candidate_similarity_codes": [
+            "S173999"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             39
           ],
@@ -4566,10 +5375,11 @@
             "연예오락업",
             "교육업; 훈련제공업; 연예오락업; 스포츠 및 문화활동업"
           ],
-          "similarity_codes": [
-            "S4101",
-            "S4104"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             41
           ],
@@ -4590,10 +5400,11 @@
             "스포츠",
             "문화활동업"
           ],
-          "similarity_codes": [
-            "S4101",
-            "S4104"
-          ],
+          "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             41
           ],
@@ -4628,7 +5439,15 @@
             "운송업",
             "운송업; 상품의 포장 및 보관업; 여행알선업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S080101"
+          ],
+          "candidate_similarity_codes": [
+            "S080101"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             39
           ],
@@ -4651,7 +5470,15 @@
             "포장",
             "보관업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S173999"
+          ],
+          "candidate_similarity_codes": [
+            "S173999"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             39
           ],
@@ -4670,7 +5497,15 @@
             "재료처리업",
             "재료처리업; 폐기물 재생업; 공기 정화 및 물 처리업; 인쇄 서비스업; 음식 및 음료수 보존업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S174099"
+          ],
+          "candidate_similarity_codes": [
+            "S174099"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             40
           ],
@@ -4691,7 +5526,15 @@
             "폐기물",
             "재생업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S174099"
+          ],
+          "candidate_similarity_codes": [
+            "S174099"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             40
           ],
@@ -4714,7 +5557,15 @@
             "정화",
             "처리업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S174099"
+          ],
+          "candidate_similarity_codes": [
+            "S174099"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             40
           ],
@@ -4735,7 +5586,15 @@
             "인쇄",
             "서비스업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S174099"
+          ],
+          "candidate_similarity_codes": [
+            "S174099"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             40
           ],
@@ -4757,7 +5616,15 @@
             "음료수",
             "보존업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S174099"
+          ],
+          "candidate_similarity_codes": [
+            "S174099"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             40
           ],
@@ -4779,6 +5646,13 @@
           "similarity_codes": [
             "S4301"
           ],
+          "candidate_similarity_codes": [
+            "S4301",
+            "S174399"
+          ],
+          "similarity_match_reason": "keyword_dictionary_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             43
           ],
@@ -4813,9 +5687,20 @@
             "교육업; 훈련제공업; 연예오락업; 스포츠 및 문화활동업"
           ],
           "similarity_codes": [
-            "S4101",
-            "S4104"
+            "S4101"
           ],
+          "candidate_similarity_codes": [
+            "S4101",
+            "S120903",
+            "S120999",
+            "S120904",
+            "S120905",
+            "S120907",
+            "S121001"
+          ],
+          "similarity_match_reason": "keyword_dictionary_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             41
           ],
@@ -4835,9 +5720,14 @@
             "교육업; 훈련제공업; 연예오락업; 스포츠 및 문화활동업"
           ],
           "similarity_codes": [
-            "S4101",
-            "S4104"
+            "S4101"
           ],
+          "candidate_similarity_codes": [
+            "S4101"
+          ],
+          "similarity_match_reason": "keyword_dictionary_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             41
           ],
@@ -4856,7 +5746,15 @@
             "수의업",
             "의료업; 수의업; 인간 또는 동물을 위한 위생 및 미용업; 농업, 수산양식, 원예 및 임업 서비스업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S174499"
+          ],
+          "candidate_similarity_codes": [
+            "S174499"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             44
           ],
@@ -4889,7 +5787,16 @@
             "건축서비스업",
             "건축서비스업; 설치 및 수리서비스업; 채광업/석유 및 가스 시추업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S040101"
+          ],
+          "candidate_similarity_codes": [
+            "S040101",
+            "S050138"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             37
           ],
@@ -4910,7 +5817,15 @@
             "설치",
             "수리서비스업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S173799"
+          ],
+          "candidate_similarity_codes": [
+            "S173799"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             37
           ],
@@ -4934,7 +5849,15 @@
             "가스",
             "시추업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S173799"
+          ],
+          "candidate_similarity_codes": [
+            "S173799"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             37
           ],
@@ -4967,7 +5890,15 @@
             "광고업",
             "광고업; 사업관리/조직 및 경영업; 사무처리업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S0101"
+          ],
+          "candidate_similarity_codes": [
+            "S0101"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             35
           ],
@@ -4991,6 +5922,10 @@
             "경영업"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             35
           ],
@@ -5010,6 +5945,10 @@
             "광고업; 사업관리/조직 및 경영업; 사무처리업"
           ],
           "similarity_codes": [],
+          "candidate_similarity_codes": [],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             35
           ],
@@ -5042,7 +5981,15 @@
           "keywords": [
             "통신서비스업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S0601"
+          ],
+          "candidate_similarity_codes": [
+            "S0601"
+          ],
+          "similarity_match_reason": "normalized_semantic_match",
+          "similarity_match_confidence": "high",
+          "similarity_fallback_used": false,
           "nice_classes": [
             38
           ],
@@ -5068,9 +6015,14 @@
             "디자인업"
           ],
           "similarity_codes": [
-            "S420201",
-            "S420202"
+            "S174299"
           ],
+          "candidate_similarity_codes": [
+            "S174299"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             42
           ],
@@ -5094,9 +6046,14 @@
             "서비스업"
           ],
           "similarity_codes": [
-            "S420201",
-            "S420202"
+            "S174299"
           ],
+          "candidate_similarity_codes": [
+            "S174299"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             42
           ],
@@ -5121,9 +6078,14 @@
             "서비스업"
           ],
           "similarity_codes": [
-            "S420201",
-            "S420202"
+            "S174299"
           ],
+          "candidate_similarity_codes": [
+            "S174299"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             42
           ],
@@ -5149,9 +6111,15 @@
             "개발업"
           ],
           "similarity_codes": [
-            "S420201",
-            "S420202"
+            "S123301"
           ],
+          "candidate_similarity_codes": [
+            "S123301",
+            "S174299"
+          ],
+          "similarity_match_reason": "exact_label_match",
+          "similarity_match_confidence": "exact",
+          "similarity_fallback_used": false,
           "nice_classes": [
             42
           ],
@@ -5188,7 +6156,17 @@
             "통화",
             "은행업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S0201"
+          ],
+          "candidate_similarity_codes": [
+            "S0201",
+            "S120401",
+            "S173699"
+          ],
+          "similarity_match_reason": "exact_label_match",
+          "similarity_match_confidence": "exact",
+          "similarity_fallback_used": false,
           "nice_classes": [
             36
           ],
@@ -5207,7 +6185,17 @@
             "보험서비스업",
             "금융, 통화 및 은행업; 보험서비스업; 부동산업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S0301"
+          ],
+          "candidate_similarity_codes": [
+            "S0301",
+            "S120401",
+            "S173699"
+          ],
+          "similarity_match_reason": "exact_label_match",
+          "similarity_match_confidence": "exact",
+          "similarity_fallback_used": false,
           "nice_classes": [
             36
           ],
@@ -5226,7 +6214,20 @@
             "부동산업",
             "금융, 통화 및 은행업; 보험서비스업; 부동산업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S1212"
+          ],
+          "candidate_similarity_codes": [
+            "S1212",
+            "S120401",
+            "S121201",
+            "S121202",
+            "S121203",
+            "S173699"
+          ],
+          "similarity_match_reason": "exact_label_match",
+          "similarity_match_confidence": "exact",
+          "similarity_fallback_used": false,
           "nice_classes": [
             36
           ],
@@ -5245,7 +6246,15 @@
             "법무서비스업",
             "법무서비스업; 유형의 재산 및 개인을 물리적으로 보호하기 위한 보안서비스업; 이성(異性) 소개업, 온라인 소셜 네트워킹 서비스업; 장례업; 베이비시팅업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S174599"
+          ],
+          "candidate_similarity_codes": [
+            "S174599"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             45
           ],
@@ -5272,7 +6281,15 @@
             "위한",
             "보안서비스업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S174599"
+          ],
+          "candidate_similarity_codes": [
+            "S174599"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             45
           ],
@@ -5299,7 +6316,15 @@
             "네트워킹",
             "서비스업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S174599"
+          ],
+          "candidate_similarity_codes": [
+            "S174599"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             45
           ],
@@ -5318,7 +6343,15 @@
             "장례업",
             "법무서비스업; 유형의 재산 및 개인을 물리적으로 보호하기 위한 보안서비스업; 이성(異性) 소개업, 온라인 소셜 네트워킹 서비스업; 장례업; 베이비시팅업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S174599"
+          ],
+          "candidate_similarity_codes": [
+            "S174599"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             45
           ],
@@ -5337,7 +6370,15 @@
             "베이비시팅업",
             "법무서비스업; 유형의 재산 및 개인을 물리적으로 보호하기 위한 보안서비스업; 이성(異性) 소개업, 온라인 소셜 네트워킹 서비스업; 장례업; 베이비시팅업"
           ],
-          "similarity_codes": [],
+          "similarity_codes": [
+            "S174599"
+          ],
+          "candidate_similarity_codes": [
+            "S174599"
+          ],
+          "similarity_match_reason": "same_class_fallback",
+          "similarity_match_confidence": "fallback",
+          "similarity_fallback_used": true,
           "nice_classes": [
             45
           ],

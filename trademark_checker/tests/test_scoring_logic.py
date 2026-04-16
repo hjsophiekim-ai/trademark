@@ -4,6 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from nice_catalog import derive_selected_scope
 from scoring import evaluate_registration
 
 
@@ -151,7 +152,7 @@ class ScoringStatusTests(unittest.TestCase):
                     "trademarkName": "LEXAI",
                     "registerStatus": "출원",
                     "classificationCode": "42",
-                    "similarityGroupCode": "S420201",
+                    "similarityGroupCode": "S123301",
                     "applicantName": "D",
                 }
             ],
@@ -166,7 +167,7 @@ class ScoringStatusTests(unittest.TestCase):
                     "class_no": "제9류",
                     "nice_classes": [9],
                     "keywords": ["소프트웨어", "SaaS", "플랫폼"],
-                    "similarity_codes": ["G390802", "G0901"],
+                    "similarity_codes": ["G390802"],
                 }
             ],
             specific_product="AI 소프트웨어",
@@ -183,14 +184,14 @@ class ScoringStatusTests(unittest.TestCase):
             trademark_type="문자만",
             is_coined=True,
             selected_classes=[9],
-            selected_codes=["G0901"],
+            selected_codes=["G390803"],
             prior_items=[
                 {
                     "applicationNumber": "4-1",
                     "trademarkName": "LEXAI",
                     "registerStatus": "출원",
                     "classificationCode": "42",
-                    "similarityGroupCode": "S420201",
+                    "similarityGroupCode": "S123301",
                     "applicantName": "D",
                 }
             ],
@@ -205,7 +206,7 @@ class ScoringStatusTests(unittest.TestCase):
                     "class_no": "제9류",
                     "nice_classes": [9],
                     "keywords": ["전자기기", "카메라", "센서", "컴퓨터"],
-                    "similarity_codes": ["G0901"],
+                    "similarity_codes": ["G390803"],
                 }
             ],
             specific_product="카메라 센서",
@@ -271,6 +272,59 @@ class ScoringStatusTests(unittest.TestCase):
         self.assertEqual(refusal["current_mark_relevance"], "low")
         self.assertFalse(top["counts_toward_final_score"])
         self.assertIn("직접 관련 낮음", top["score_reflection_label"])
+
+
+    def test_derived_similarity_codes_flow_into_review_engine(self) -> None:
+        field = {
+            "kind": "services",
+            "group_id": "misc_services",
+            "group_label": "기타 서비스",
+            "field_id": "finance_scope",
+            "description": "금융, 통화 및 은행업",
+            "example": "금융, 통화 및 은행업",
+            "class_no": "제36류",
+            "nice_classes": [36],
+            "keywords": ["금융", "통화", "은행"],
+            "similarity_codes": ["S0201"],
+        }
+        scope = derive_selected_scope(
+            "services",
+            [field],
+            specific_products={"finance_scope": "재무상담 서비스"},
+            code_lookup=lambda *_args, **_kwargs: [
+                {
+                    "code": "S120401",
+                    "selected": True,
+                    "match_reason": "keyword_dictionary_match",
+                    "match_confidence": "high",
+                }
+            ],
+        )
+
+        result = evaluate_registration(
+            trademark_name="LexBank",
+            trademark_type="문자상표",
+            is_coined=True,
+            selected_classes=scope["derived_nice_classes"],
+            selected_codes=scope["derived_similarity_codes"],
+            prior_items=[
+                {
+                    "applicationNumber": "7",
+                    "trademarkName": "LEXBANK",
+                    "registerStatus": "출원",
+                    "classificationCode": "36",
+                    "similarityGroupCode": "S120401",
+                    "applicantName": "G",
+                }
+            ],
+            selected_fields=[field],
+            specific_product="재무상담 서비스",
+        )
+
+        self.assertEqual(scope["derived_nice_classes"], [36])
+        self.assertEqual(scope["derived_similarity_codes"], ["S0201", "S120401"])
+        self.assertEqual(result["selected_similarity_codes"], ["S0201", "S120401"])
+        self.assertGreaterEqual(result["filtered_prior_count"], 1)
 
 
 if __name__ == "__main__":

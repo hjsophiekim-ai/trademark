@@ -9,6 +9,7 @@ from nice_catalog import (
     build_selection_summary,
     can_continue_to_code_selection,
     can_enter_subgroup_stage,
+    derive_selected_scope,
     flatten_subgroups,
     get_group_cards,
     get_groups,
@@ -71,7 +72,7 @@ class NiceCatalogTests(unittest.TestCase):
         self.assertFalse(can_enter_subgroup_stage("goods", None))
         self.assertTrue(can_enter_subgroup_stage("goods", first_goods_group["group_id"]))
 
-    def test_subgroup_selection_controls_next_button_state(self) -> None:
+    def test_subgroup_selection_controls_review_button_state(self) -> None:
         self.assertFalse(can_continue_to_code_selection([]))
         field = _field_by_labels("goods", "생활/건강", "표백제 및 기타 세탁용 제제")
         self.assertTrue(can_continue_to_code_selection([field]))
@@ -86,9 +87,13 @@ class NiceCatalogTests(unittest.TestCase):
         self.assertEqual(summary["selected_nice_classes"], [36])
 
     def test_selected_subgroup_keeps_similarity_codes(self) -> None:
-        field = _field_by_labels("goods", "소프트웨어", "컴퓨터 및 컴퓨터주변기기")
+        field = _field_by_labels(
+            "goods",
+            "소프트웨어",
+            "기록 및 내려받기 가능한 멀티미디어 파일, 컴퓨터 소프트웨어, 빈 디지털 또는 아날로그 기록 및 저장매체",
+        )
         self.assertEqual(field["nice_classes"], [9])
-        self.assertEqual(field["similarity_codes"], ["G390802", "G0901", "G0903"])
+        self.assertEqual(field["similarity_codes"], ["G390802"])
 
     def test_goods_and_services_share_same_step_flow_helpers(self) -> None:
         goods_group_id = get_group_cards("goods")[0]["group_id"]
@@ -117,6 +122,42 @@ class NiceCatalogTests(unittest.TestCase):
         self.assertEqual(finance["group_label"], "기타 서비스")
         self.assertEqual(finance["nice_classes"], [36])
         self.assertIn("keywords", finance)
+
+    def test_subgroup_derives_nice_classes_and_similarity_codes(self) -> None:
+        field = _field_by_labels("services", "기타 서비스", "금융, 통화 및 은행업")
+        scope = derive_selected_scope("services", [field])
+        self.assertEqual(scope["derived_nice_classes"], [36])
+        self.assertEqual(scope["selected_groups"], ["기타 서비스"])
+        self.assertEqual(scope["selected_subgroups"], ["금융, 통화 및 은행업"])
+        self.assertEqual(scope["derived_similarity_codes"], ["S0201"])
+        self.assertIn("S120401", scope["candidate_similarity_codes"])
+        self.assertEqual(scope["similarity_match_details"][0]["match_confidence"], "exact")
+
+    def test_specific_product_can_extend_derived_similarity_codes(self) -> None:
+        field = _field_by_labels("services", "기타 서비스", "금융, 통화 및 은행업")
+
+        def fake_lookup(product_name: str, **_: object) -> list[dict]:
+            if product_name == "재무상담 서비스":
+                return [
+                    {
+                        "code": "S120401",
+                        "selected": True,
+                        "match_reason": "keyword_dictionary_match",
+                        "match_confidence": "high",
+                    }
+                ]
+            return []
+
+        scope = derive_selected_scope(
+            "services",
+            [field],
+            specific_products={field["field_id"]: "재무상담 서비스"},
+            code_lookup=fake_lookup,
+        )
+        self.assertEqual(scope["derived_nice_classes"], [36])
+        self.assertIn("S0201", scope["derived_similarity_codes"])
+        self.assertIn("S120401", scope["derived_similarity_codes"])
+        self.assertIn("재무상담 서비스", scope["search_terms_for_prior_marks"])
 
 
 if __name__ == "__main__":
