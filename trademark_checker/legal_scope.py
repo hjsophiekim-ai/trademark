@@ -84,6 +84,31 @@ FAMOUS_MARKS = {
     "tesla",
     "starbucks",
 }
+NON_DISTINCTIVE_WORDS = {
+    "love", "good", "best", "smile", "happy", "great", "cool", "hot", "top",
+    "pro", "plus", "ultra", "super", "smart", "fresh", "clean", "fast",
+    "big", "small", "new", "old", "red", "blue", "green", "black", "white",
+    "사랑", "행복", "최고", "좋은", "미소", "감사", "전문",
+    "고양이", "강아지", "사과", "포도", "바나나", "나무", "꽃", "하늘",
+    "바다", "산", "물", "불",
+    "신선", "달콤", "깔끔", "빠른", "느린", "큰", "작은", "예쁜",
+    "행복한", "슬픈", "화난", "졸린",
+    "테크", "온라인", "디지털", "오리지널", "베스트",
+    "브랜드", "몰", "스토어", "샵", "트리", "랩",
+    "패션", "뷰티", "헬스",
+}
+DESCRIPTIVE_PATTERNS = {
+    "cool": {3, 5, 32}, # 화장품, 약제, 음료 등에서 '시원한'
+    "sweet": {30, 32},  # 과자, 음료 등에서 '달콤한'
+    "fresh": {29, 30, 31, 32, 43}, # 신선한
+    "clean": {3, 37}, # 세정, 청소
+    "fast": {39, 43}, # 배달, 음식
+    "시원": {3, 5, 32},
+    "달콤": {30, 32},
+    "신선": {29, 30, 31, 32, 43},
+    "깔끔": {3, 37},
+    "빠른": {39, 43},
+}
 COMMON_SURNAMES = {
     "kim",
     "lee",
@@ -124,19 +149,48 @@ WEAK_GEO_SUFFIXES = {
     "랩",
 }
 GEOGRAPHIC_NAMES = {
-    "서울": {"서울", "서울시", "seoul"},
-    "부산": {"부산", "busan"},
-    "인천": {"인천", "incheon"},
-    "대구": {"대구", "daegu"},
-    "대전": {"대전", "daejeon"},
-    "광주": {"광주", "gwangju"},
-    "울산": {"울산", "ulsan"},
-    "세종": {"세종", "sejong"},
-    "제주": {"제주", "jeju"},
-    "도쿄": {"도쿄", "tokyo"},
-    "파리": {"파리", "paris"},
-    "뉴욕": {"뉴욕", "newyork", "new york"},
-    "런던": {"런던", "london"},
+    # 국가명 (상표법 제33조 제1항 제4호 - 현저한 지명)
+    "대한민국": {"대한민국", "korea", "Republic of Korea", "Korea"},
+    "미국": {"미국", "usa", "america", "United States", "US"},
+    "영국": {"영국", "uk", "britain", "United Kingdom", "Britain"},
+    "독일": {"독일", "germany", "Deutschland"},
+    "프랑스": {"프랑스", "france"},
+    "일본": {"일본", "japan", "Japan"},
+    "중국": {"중국", "china", "China"},
+    "러시아": {"러시아", "russia", "Russia"},
+    "캐나다": {"캐나다", "canada", "Canada"},
+    "호주": {"호주", "australia", "Australia"},
+    "인도": {"인도", "india", "India"},
+    "브라질": {"브라질", "brazil", "Brazil"},
+    "멕시코": {"멕시코", "mexico", "Mexico"},
+    "스페인": {"스페인", "spain", "Spain"},
+    "이탈리아": {"이탈리아", "italy", "Italy"},
+    "스위스": {"스위스", "swiss", "Switzerland"},
+    "네덜란드": {"네덜란드", "netherlands", "Holland"},
+    "홍콩": {"홍콩", "hongkong", "hong kong", "Hong Kong"},
+    "싱가포르": {"싱가포르", "singapore", "Singapore"},
+    "대만": {"대만", "taiwan", "Taiwan"},
+    # 주요 도시명
+    "서울": {"서울", "서울시", "seoul", "Seoul"},
+    "부산": {"부산", "busan", "Busan"},
+    "인천": {"인천", "incheon", "Incheon"},
+    "대구": {"대구", "daegu", "Daegu"},
+    "대전": {"대전", "daejeon", "Daejeon"},
+    "광주": {"광주", "gwangju", "Gwangju"},
+    "울산": {"울산", "ulsan", "Ulsan"},
+    "세종": {"세종", "sejong", "Sejong"},
+    "제주": {"제주", "jeju", "Jeju"},
+    "수원": {"수원", "suwon", "Suwon"},
+    "창원": {"창원", "changwon", "Changwon"},
+    "도쿄": {"도쿄", "tokyo", "Tokyo"},
+    "오사카": {"오사카", "osaka", "Osaka"},
+    "파리": {"파리", "paris", "Paris"},
+    "런던": {"런던", "london", "London"},
+    "뉴욕": {"뉴욕", "newyork", "new york", "New York"},
+    " LA": {"LA", "losangeles", "los angeles", "Los Angeles"},
+    "시드니": {"시드니", "sydney", "Sydney"},
+    "베를린": {"베를린", "berlin", "Berlin"},
+    "밀라노": {"밀라노", "milan", "Milan"},
 }
 DESCRIPTIVE_HINTS = {
     "finance",
@@ -420,12 +474,19 @@ def _geo_match_payload(trademark_name: str) -> dict | None:
         for variant in normalized_variants:
             if not variant:
                 continue
+            # 국가명 또는 주요 도시명의 직접 일치 → fatal (상표법 제33조 제1항 제4호)
             if compact_mark == variant:
+                is_country_name = canonical in {
+                    "대한민국", "미국", "영국", "독일", "프랑스", "일본", "중국",
+                    "러시아", "캐나다", "호주", "인도", "브라질", "멕시코", "스페인",
+                    "이탈리아", "스위스", "네덜란드", "홍콩", "싱가포르", "대만"
+                }
+                cap = 5 if is_country_name else 10
                 return {
                     "basis": "제33-1-4",
-                    "level": "high",
-                    "cap": 22,
-                    "reason": f"'{trademark_name}'는 현저한 지리적 명칭 '{canonical}' 자체와 동일하게 인식될 가능성이 큽니다.",
+                    "level": "fatal",
+                    "cap": cap,
+                    "reason": f"'{trademark_name}'는 현저한 지명 '{canonical}' 자체와 동일하거나 가깝습니다. 상표법 제33조 제1항 제4호에 따라 등록이 거절될 가능성이 매우 높습니다.",
                 }
             if compact_mark.startswith(variant):
                 remainder = compact_mark[len(variant):]
@@ -433,20 +494,20 @@ def _geo_match_payload(trademark_name: str) -> dict | None:
                     return {
                         "basis": "제33-1-4",
                         "level": "high",
-                        "cap": 30,
+                        "cap": 22,
                         "reason": (
-                            f"'{trademark_name}'는 현저한 지리적 명칭 '{canonical}'에 약한 부가요소만 붙은 형태로 보여 "
-                            "지리명 표장 위험이 높습니다."
+                            f"'{trademark_name}'는 현저한 지명 '{canonical}'에 약한 부가요소만 붙은 형태로 보여 "
+                            "지명 표장 위험이 높아 등록 가능성이 낮습니다."
                         ),
                     }
             if _edit_distance(compact_mark, variant) <= 1 or SequenceMatcher(None, compact_mark, variant).ratio() >= 0.9:
                 return {
                     "basis": "제33-1-4",
                     "level": "high",
-                    "cap": 28,
+                    "cap": 18,
                     "reason": (
-                        f"'{trademark_name}'는 현저한 지리적 명칭 '{canonical}'의 근접 철자변형으로 보일 수 있어 "
-                        "지리명 표장 위험이 높습니다."
+                        f"'{trademark_name}'는 현저한 지명 '{canonical}'의 근접 철자변형으로 보일 수 있어 "
+                        "지명 표장 위험이 높아 등록 가능성이 낮습니다."
                     ),
                 }
     return None
@@ -559,6 +620,83 @@ def evaluate_absolute_refusal(
             }
         )
 
+    # 1. 식별력 없는 일반 단어/사전 단어 체크 (제33조 제1항 제7호 - 기타 식별력 없는 표장)
+    # 조어상표(is_coined=false)이고, 단어가 일반 사전에 등재된 순수 명사/형용사/동사이면 무조건 감점
+    # 고양이, 사과, 나무 등 단일 普通명사뿐 아니라 사랑, 행복 등 감정 표현에도 적용
+    if not is_coined:
+        compact = _compact(trademark_name)
+        # 전체 표장이 일반 단어 리스트에 있는지 확인
+        if compact in NON_DISTINCTIVE_WORDS:
+            findings.append(
+                {
+                    "basis": "제33-1-7",
+                    "level": "fatal",
+                    "cap": 5,
+                    "reason": f"'{trademark_name}'는 일반 사전에 등재된 순수 명사/형용사/감정 표현 단어로서 식별력이 매우 부족합니다. 특정인에게 독점권을 부여하기 어려운 공익적 사유(제33조 제1항 제7호)로 인해 등록 가능성이 극히 낮습니다.",
+                }
+            )
+        else:
+            # 표장의 각 어절이 일반 단어인지 확인
+            # 'G트리'처럼 영문/숫자가 섞인 경우 단순명사로 보지 않음
+            has_alphanum = bool(re.search(r"[a-z0-9]", compact))
+            
+            parts = _iter_text_parts(trademark_name)
+            for part in parts:
+                part_compact = _compact(part)
+                # 단독으로 쓰였을 때 식별력이 없는 단어이면서, 전체 표장이 그 단어만으로 구성되거나 
+                # 또는 결합이 매우 단순한 경우만 차단
+                if part_compact in NON_DISTINCTIVE_WORDS and len(part_compact) >= 2:
+                    # 'G트리'처럼 'G' + '트리' 형태는 '트리'가 일반단어라도 'G'와의 결합으로 식별력을 가질 수 있음
+                    # 따라서 영문/숫자가 포함된 결합표장은 여기서 제외
+                    if not has_alphanum:
+                        findings.append(
+                            {
+                                "basis": "제33-1-7",
+                                "level": "fatal",
+                                "cap": 12,
+                                "reason": f"'{trademark_name}'의 구성 요소 '{part}'는 일반적으로 사용되는 기본 단어입니다. 상표법 제33조 제1항 제7호에 해당하여 식별력이 부족합니다.",
+                            }
+                        )
+                        break
+
+    # 조어/고유발생 상표가 아닌 경우, 且 단어가 단순 普通명사 1개로 구성되어 있으면
+    # 即使不在上面的リストにも追加で 감점 (예: "강아지", "사과" 등 단순 사물명)
+    # This is a catch-all: if is_coined=False and the mark is a single short Korean noun
+    # not already caught, apply a moderate-to-high restriction.
+    if (
+        not is_coined
+        and compact_mark not in NON_DISTINCTIVE_WORDS
+        and not any(finding["basis"] == "제33-1-7" for finding in findings)
+    ):
+        parts = _iter_text_parts(trademark_name)
+        if len(parts) == 1 and len(compact_mark) >= 2 and len(compact_mark) <= 6:
+            # 단일 어절이고 2~6자이면 普通명사일 가능성 높음
+            # 'G트리'처럼 영문/숫자가 포함된 경우는 조어로 보아 제외
+            has_alphanum = bool(re.search(r"[a-z0-9]", compact_mark))
+            if not has_alphanum:
+                is_korean_noun = bool(re.search(r"[가-힣]", trademark_name))
+                if is_korean_noun:
+                    findings.append(
+                        {
+                            "basis": "제33-1-7",
+                            "level": "high",
+                            "cap": 30,
+                            "reason": f"'{trademark_name}'는 일반적인 사물/성질 명칭으로 보여지며, 조어 상표가 아니므로 식별력이 부족할 가능성이 있습니다.",
+                        }
+                    )
+    for pattern, classes in DESCRIPTIVE_PATTERNS.items():
+        if not is_coined and pattern in compact_mark:
+            if any(cls in classes for cls in selected_classes):
+                findings.append(
+                    {
+                        "basis": "제33-1-3",
+                        "level": "fatal",
+                        "cap": 8,
+                        "reason": f"'{trademark_name}'는 지정상품의 품질, 원재료, 효능 또는 성질을 직접적으로 나타내는 기술적 표장(성질표시)에 해당합니다. 상표법 제33조 제1항 제3호에 의해 등록이 거절될 가능성이 매우 높습니다.",
+                    }
+                )
+                break
+
     if any(term in compact_mark for term in IMPROPER_TERMS):
         findings.append(
             {
@@ -669,7 +807,12 @@ def evaluate_absolute_refusal(
         label = "보통 수준"
 
     reasons = [finding["reason"] for finding in findings]
-    summary = reasons[0] if reasons else "절대적 거절사유 관점에서 두드러진 식별력 장애는 크지 않습니다."
+    # 가장 낮은 cap을 가진 사유를 우선적으로 summary로 채택
+    if findings:
+        best_finding = min(findings, key=lambda x: x["cap"])
+        summary = best_finding["reason"]
+    else:
+        summary = "절대적 거절사유 관점에서 두드러진 식별력 장애는 크지 않습니다."
 
     return {
         "label": label,

@@ -113,19 +113,29 @@ overlap_type:
   → min(Stage 1 cap, Stage 2) → 최종 점수
 ```
 
-## 9. 검색 파이프라인 디버그 정보 표시
+## 9. 검색 파이프라인 디버그 정보 및 상태 표시
 
-개발/검증 모드에서 아래 정보를 반드시 표시한다:
-- `selected_subgroup`: 사용자가 선택한 상품군 이름
-- `selected_primary_codes`: 도출된 primary 유사군코드
-- `selected_related_codes`: 도출된 related 유사군코드
-- `selected_retail_codes`: 도출된 retail 유사군코드
-- `mapping_failed_reason`: 코드 도출 실패 사유 (있을 경우)
-- `search_queries_attempted`: 실행된 검색 쿼리 목록
-- `search_hits_per_query`: 각 쿼리의 결과 건수
-- `detail_parse_count`: item-level 파싱 성공 건수
-- `strongest_prior_item`: 가장 강한 충돌 prior item label
-- `strongest_prior_codes`: 해당 item의 SC codes
-- `overlap_type`: 최종 결정된 overlap 유형
+개발/검증 모드 및 보고서에서 아래 정보를 반드시 표시하여 검색의 신뢰성을 확인한다:
 
-앱 UI에서는 "검색 파이프라인 디버그" 접기 섹션으로 표시하며, PDF 보고서에서는 "Search Debug" 섹션으로 출력한다.
+### 9.1 검색 상태 (search_status)
+- `search_status`: `success_with_hits`, `success_zero_hits`, `transport_error`, `parse_error`, `blocked_or_unexpected_page` 중 하나 표시.
+- `http_status`: HTTP 응답 코드 (200, 403, 404, 500 등).
+- `search_failed`: 검색 레이어 장애 여부 (True/False).
+- `search_error_msg`: 장애 발생 시 구체적인 에러 메시지.
+
+### 9.2 쿼리별 상세 정보
+- `query_mode`: `primary_sc`, `class_only`, `text_fallback` 등 실행된 모드.
+- `search_formula`: 실제 KIPRIS로 전송된 검색 식 (brackets 제거된 형태).
+- `result_count`: 해당 쿼리로 발견된 후보 건수.
+- `response_preview`: 응답 본문 앞부분 (디버깅용).
+
+### 9.3 파싱 및 추출 정보
+- `detail_parse_count`: 상세 페이지 접근 및 아이템/SC 추출 성공 건수.
+- `detail_parse_status`: 상세 페이지 파싱 단계별 성공 여부.
+- `strongest_prior_item`: 가장 강한 충돌 선행상표 지정상품명.
+- `strongest_prior_codes`: 해당 아이템의 유사군코드(SC).
+- `overlap_type`: 최종 결정된 중첩 유형 (`exact_primary_overlap` 등).
+
+### 9.4 UI/UX 가이드라인
+- 검색 실패 시 UI 상단에 **"KIPRIS 검색 엔진 장애"** 경고를 노출하고, 결과 점수가 낮게(50점 이하) 조정되었음을 알린다.
+- "검색 파이프라인 디버그" 섹션을 통해 어떤 단계(Transport, Extraction, Detail Parsing)에서 실패했는지 시각적으로 보여준다.

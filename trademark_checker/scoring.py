@@ -1,4 +1,4 @@
-﻿"""상표 등록 가능성 분석 로직."""
+"""상표 등록 가능성 분석 로직."""
 
 from __future__ import annotations
 
@@ -6,14 +6,34 @@ import re
 from difflib import SequenceMatcher
 from typing import Iterable, List
 
-from goods_scope import classify_product_similarity, normalize_selected_input
-from legal_scope import SCOPE_GROUP_LABELS, build_scope_counts, evaluate_absolute_refusal
-from prior_mark_status import (
-    merge_refusal_analysis as merge_refusal_analysis_payload,
-    normalize_refusal_analysis as normalize_refusal_analysis_payload,
-    status_profile as get_status_profile,
-)
-from similarity_code_db import get_code_metadata
+try:
+    from .goods_scope import classify_product_similarity, normalize_selected_input
+    from .legal_scope import (
+        NON_DISTINCTIVE_WORDS,
+        SCOPE_GROUP_LABELS,
+        build_scope_counts,
+        evaluate_absolute_refusal,
+    )
+    from .prior_mark_status import (
+        merge_refusal_analysis as merge_refusal_analysis_payload,
+        normalize_refusal_analysis as normalize_refusal_analysis_payload,
+        status_profile as get_status_profile,
+    )
+    from .similarity_code_db import get_code_metadata
+except ImportError:
+    from goods_scope import classify_product_similarity, normalize_selected_input
+    from legal_scope import (
+        NON_DISTINCTIVE_WORDS,
+        SCOPE_GROUP_LABELS,
+        build_scope_counts,
+        evaluate_absolute_refusal,
+    )
+    from prior_mark_status import (
+        merge_refusal_analysis as merge_refusal_analysis_payload,
+        normalize_refusal_analysis as normalize_refusal_analysis_payload,
+        status_profile as get_status_profile,
+    )
+    from similarity_code_db import get_code_metadata
 
 
 COMMON_WORDS = {"사랑", "사랑해", "브랜드", "맛있는", "행복", "좋은", "예쁜", "최고"}
@@ -600,13 +620,21 @@ def _overlap_rank(item: dict) -> int:
 def _overlap_weight(item: dict) -> float:
     overlap_type = _canonical_overlap_type(item.get("overlap_type", item.get("product_bucket", "excluded")))
     overlap_basis = item.get("overlap_basis", "")
+    confusion_score = item.get("confusion_score", 0)
+    
     weights = {
-        "exact_primary_overlap": 1.72,
-        "related_primary_overlap": 0.98,
+        # exact_primary_overlap: 대폭 상향하여 혼동 위험 즉시 반영
+        "exact_primary_overlap": 2.5,
+        "related_primary_overlap": 1.2,
         "retail_overlap_only": 0.22,
         "same_class_only": 0.18,
         "no_material_overlap": 0.1 if overlap_basis == "cross_kind_exception" else 0.0,
     }
+    
+    # same_class_only라도 표장 유사도가 높으면 가중치를 대폭 높임
+    if overlap_type == "same_class_only" and confusion_score >= 40:
+        return 0.55
+    
     if overlap_basis == "retail_with_base_goods_overlap":
         return 0.74
     return float(item.get("product_penalty_weight", weights.get(overlap_type, 0.0)))
@@ -681,6 +709,17 @@ def _confusion_metrics(item: dict) -> dict:
     elif item.get("mark_identity") == "exact" and item.get("counts_toward_final_score"):
         confusion_score = max(confusion_score, 88)
 
+    #BUG FIX: exact_primary_overlap(SC 코드가 직접 일치)하면 confusion_score를 80 이상으로 강제 인상
+    #KIPRIS 상세페이지에서 추출한 실제 SC 코드와 사용자의 선택 코드가 정확히 일치하는 경우
+    #상표 유사도와 무관하게 혼동 위험이 매우 높다고 판단
+    if item.get("overlap_type") == "exact_primary_overlap" and item.get("counts_toward_final_score"):
+        primary_match = item.get("primary_overlap_codes", [])
+        if primary_match:
+            confusion_score = max(confusion_score, 80)
+            # 상표도 similar 이상이면 90 이상으로 올림
+            if item.get("mark_similarity", 0) >= 70:
+                confusion_score = max(confusion_score, 90)
+
     if confusion_score >= 90:
         label = "매우 높음"
     elif confusion_score >= 75:
@@ -715,16 +754,23 @@ def _score_from_analysis(
     elif trademark_type == "로고만":
         score += 0
 
+    # 사전적 일반 단어 및 식별력 감점 강화
+    if not is_coined:
+        if normalized in NON_DISTINCTIVE_WORDS:
+            score -= 25  # 강력한 감점
+        elif normalized in COMMON_WORDS:
+            score -= 10
+        else:
+            score -= 5
+    else:
+        # 조어상표 가점
+        if len(normalized) >= 4:
+            score += 2
+
     if len(normalized) >= 6:
         score += 1
     elif len(normalized) <= 2:
         score -= 2
-
-    if " " in trademark_name.strip():
-        score -= 1
-
-    if not is_coined and normalized in COMMON_WORDS:
-        score -= 3
 
     live_candidates = [item for item in candidates if item.get("counts_toward_final_score")]
     for item in live_candidates:
@@ -881,26 +927,26 @@ def _calibrate_score(
     primary_match_count = int(strongest.get("primary_code_overlap_count", 0)) if strongest else 0
 
     if strongest_type == "exact_primary_overlap":
-        cap = 45
+        cap = 40
         if mark_similarity >= 90:
-            cap = 34
+            cap = 25
         elif mark_similarity >= 85:
-            cap = 40
+            cap = 30
         elif mark_similarity >= 80:
-            cap = 45
+            cap = 35
         if strongest.get("mark_identity") == "exact":
-            cap = min(cap, 28)
+            cap = min(cap, 18)
         if primary_match_count >= 2:
-            cap = max(20, cap - 5)
-        calibrated = min(calibrated, max(20, cap))
+            cap = max(15, cap - 5)
+        calibrated = min(calibrated, max(15, cap))
         cap_info = {
             "cap_reason": "registered prior + high mark similarity + direct code overlap",
-            "stage2_cap_upper": max(20, cap),
+            "stage2_cap_upper": max(15, cap),
             "cap_applied_overlap_type": strongest_type,
         }
         explanations.append(
             "등록 상태 선행상표와 기본 유사군코드가 직접 겹칩니다. "
-            "direct overlap이 식별력 보정보다 우선하므로 등록가능성을 20~45 구간으로 강하게 제한했습니다."
+            "direct overlap이 식별력 보정보다 우선하므로 등록가능성을 15~40 구간으로 강하게 제한했습니다."
         )
     elif strongest_type == "related_primary_overlap":
         lower = 35 if mark_similarity >= 80 else 42
@@ -916,16 +962,29 @@ def _calibrate_score(
             "related overlap 위험대로 35~50 구간 중심으로 보정했습니다."
         )
     elif strongest_type == "same_class_only":
-        calibrated = min(max(calibrated, 60), 75)
+        lower, upper = 60, 75
+        # 심각한 오류 해결: confusion_score가 높으면 same_class_only라도 캡을 강제로 낮춤
+        if confusion_score >= 50:
+            lower, upper = 30, 50
+            explanations.append(
+                f"표장 혼동위험({confusion_score}%)이 매우 높아 동일 니스류 내의 다른 유사군이라도 등록 가능성을 30~50 구간으로 대폭 제한했습니다."
+            )
+        elif confusion_score >= 40:
+            lower, upper = 50, 65
+            explanations.append(
+                f"표장 혼동위험({confusion_score}%)이 상당하여 same-class-only 구간을 50~65로 하향 조정했습니다."
+            )
+        else:
+            explanations.append(
+                "같은 니스류 보조 검토군만 존재해 same-class-only 구간(60~75)으로 제한했습니다. "
+                "직접 코드 충돌과 같은 수준으로 감점하지는 않았습니다."
+            )
+        calibrated = min(max(calibrated, lower), upper)
         cap_info = {
-            "cap_reason": "same class only without item-level SC overlap",
-            "stage2_cap_upper": 75,
+            "cap_reason": f"same class only (confusion={confusion_score}%)",
+            "stage2_cap_upper": upper,
             "cap_applied_overlap_type": strongest_type,
         }
-        explanations.append(
-            "같은 니스류 보조 검토군만 존재해 same-class-only 구간(60~75)으로 제한했습니다. "
-            "직접 코드 충돌과 같은 수준으로 감점하지는 않았습니다."
-        )
     elif strongest_type == "retail_overlap_only":
         calibrated = min(max(calibrated, 64), 80)
         cap_info = {

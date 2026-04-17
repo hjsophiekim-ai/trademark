@@ -8,9 +8,14 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Iterable
 
-from legal_scope import SCOPE_GROUP_LABELS, cross_kind_exception, infer_kind_from_classes
-from nice_catalog import dedupe_ints, dedupe_strings
-from similarity_code_db import get_code_metadata
+try:
+    from .legal_scope import SCOPE_GROUP_LABELS, cross_kind_exception, infer_kind_from_classes
+    from .nice_catalog import dedupe_ints, dedupe_strings
+    from .similarity_code_db import get_code_metadata
+except ImportError:
+    from legal_scope import SCOPE_GROUP_LABELS, cross_kind_exception, infer_kind_from_classes
+    from nice_catalog import dedupe_ints, dedupe_strings
+    from similarity_code_db import get_code_metadata
 
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
@@ -436,21 +441,39 @@ def _evaluate_designated_item(item: dict, context: dict, designated_item: dict) 
         )
 
     if shared_classes:
+        # KIPRIS 상세 정보를 통해 실제 SC 코드를 확보했는지 확인
+        prior_has_codes = bool(prior_primary)
+        detail_fetch_success = item.get("detail_fetch_success", False) if "detail_fetch_success" in item else None
+        
         prior_token_source = " ".join(
             [designated_item.get("prior_item_label", ""), *prior_primary]
         )
         overlap_tokens = sorted(context["tokens"] & {token for token in _tokenize(prior_token_source) if len(token) >= 2})
         basis = "same_class_context" if overlap_tokens else "same_class_only"
-        score = 24 if overlap_tokens else 12
-        confidence = "medium" if overlap_tokens else "low"
-        reason = (
-            "같은 니스류이지만 direct/related 유사군코드 overlap은 없습니다. "
-            + (
-                f"문맥상 가까운 표현({', '.join(overlap_tokens[:3])})만 있어 보조 검토군으로 남겼습니다."
-                if overlap_tokens
-                else "금융/보험/부동산처럼 같은 36류라도 item-level SC가 다르면 direct conflict로 올리지 않습니다."
+        
+        # 상세 페이지에서 코드를 확보하지 못했을 경우 불확실성 표시
+        if not prior_has_codes and detail_fetch_success is False:
+            # 상세 조회에 실패한 same_class는"Uncertain_same_class"로 분류
+            # 이는 점수 캡을 높이는 효과를 가짐
+            score = 28
+            confidence = "low_uncertain"
+            reason = (
+                "같은 니스류이지만 KIPRIS 상세페이지에서 코드를 확보하지 못해 "
+                "정확한 overlap 판단이 불가능합니다.same_class_only보다 위험할 수 있어 "
+                "보조 검토군 상한을 상향했습니다."
             )
-        )
+        else:
+            score = 24 if overlap_tokens else 12
+            confidence = "medium" if overlap_tokens else "low"
+            reason = (
+                "같은 니스류이지만 direct/related 유사군코드 overlap은 없습니다. "
+                + (
+                    f"문맥상 가까운 표현({', '.join(overlap_tokens[:3])})만 있어 보조 검토군으로 남겼습니다."
+                    if overlap_tokens
+                    else "금융/보험/부동산처럼 같은 36류라도 item-level SC가 다르면 direct conflict로 올리지 않습니다."
+                )
+            )
+        
         return _build_overlap_payload(
             bucket="same_class",
             scope_bucket="same_class_candidates",

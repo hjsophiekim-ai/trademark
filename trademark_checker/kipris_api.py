@@ -19,7 +19,10 @@ from pathlib import Path
 
 import requests
 
-from similarity_code_db import get_class_for_code
+try:
+    from .similarity_code_db import get_class_for_code
+except ImportError:
+    from similarity_code_db import get_class_for_code
 
 try:
     from dotenv import load_dotenv
@@ -33,6 +36,14 @@ BASE_URL = "https://www.kipris.or.kr/kportal/resulta.do"
 USE_MOCK = os.getenv("KIPRIS_USE_MOCK", "false").lower() == "true"
 DATA_DIR = Path(__file__).resolve().parent / "data"
 PRIOR_DETAIL_FIXTURE_PATH = DATA_DIR / "prior_mark_detail_fixtures.json"
+
+# Search Status Constants
+STATUS_SUCCESS_HITS = "success_with_hits"
+STATUS_SUCCESS_ZERO = "success_zero_hits"
+STATUS_TRANSPORT_ERROR = "transport_error"
+STATUS_PARSE_ERROR = "parse_error"
+STATUS_BLOCKED = "blocked_or_unexpected_page"
+
 QUERY_MODE_LABELS = {
     "primary_sc": "TN + class + primary SC",
     "class_only": "TN + class",
@@ -64,6 +75,72 @@ def _normalize_name_key(value: str) -> str:
 def _normalize_class_no(value: str | int | None) -> str:
     digits = re.findall(r"\d+", str(value or ""))
     return str(int(digits[0])) if digits else ""
+
+
+def _parse_similarity_codes_from_html(html: str) -> list[str]:
+    """HTML 본문에서 유사군코드(S0201 등)를 추출한다."""
+    # S[0-9]{2}[0-9]{2} 형식의 유사군코드 추출 (S0201, G0201 등)
+    # KIPRIS 상세 페이지는 보통 td 태그 안에 [G0101] 또는 (G0101) 형태로 표시함
+    # 더 정확하게는 <td ...>G0101</td> 또는 <td>[G0101]</td> 형태를 찾음
+    import re
+    
+    # 1. 태그 내부 텍스트 추출 (간단한 방식)
+    codes = re.findall(r'[GS][0-9]{2}[0-9]{2,}', html)
+    
+    # 2. 지정상품 테이블 내에서 추출 시도 (더 정확함)
+    # KIPRIS 상세페이지 지정상품 탭의 구조: <td class="v_left">유사군코드<br/>[G0101]</td>
+    table_codes = re.findall(r'\[([GS][0-9]{2}[0-9]{2,})\]', html)
+    
+    all_codes = set(codes) | set(table_codes)
+    return sorted(list(all_codes))
+
+def _parse_designated_items_from_html(html: str, ann: str) -> list[dict]:
+    """상세 페이지 HTML에서 지정상품 리스트와 유사군코드를 구조적으로 추출한다."""
+    import re
+    from html import unescape
+    
+    items = []
+    # KIPRIS 상세페이지 지정상품 행 패턴: <tr> ... <td>순번</td> <td>류</td> <td>지정상품</td> <td>유사군코드</td> ... </tr>
+    # 실제로는 매우 복잡하므로, 텍스트 기반으로 우선 파싱하되 
+    # 유사군코드가 발견되는 행 주위의 텍스트를 상품명으로 간주함
+    
+    # 지정상품 테이블 영역 추출 시도
+    # <table class="table_style01" ... id="designatedGoodsTable"> ... </table>
+    table_match = re.search(r'<table[^>]*id="designatedGoodsTable"[^>]*>(.*?)</table>', html, re.DOTALL)
+    if not table_match:
+        # 테이블 ID가 없을 경우 일반적인 테이블 구조 시도
+        table_match = re.search(r'<table[^>]*>(.*?)지정상품(.*?)</table>', html, re.DOTALL)
+        
+    if table_match:
+        content = table_match.group(1)
+        # 각 행(tr) 추출
+        rows = re.findall(r'<tr[^>]*>(.*?)</tr>', content, re.DOTALL)
+        for row in rows:
+            cols = re.findall(r'<td[^>]*>(.*?)</td>', row, re.DOTALL)
+            if len(cols) >= 3:
+                # 류, 상품명, 유사군코드 순서 (KIPRIS 표준)
+                class_no = re.sub(r'<[^>]+>', '', cols[1]).strip()
+                label = re.sub(r'<[^>]+>', '', cols[2]).strip()
+                sc_text = re.sub(r'<[^>]+>', '', cols[3]).strip()
+                sc_codes = re.findall(r'[GS][0-9]{2}[0-9]{2,}', sc_text)
+                
+                if label and sc_codes:
+                    items.append({
+                        "prior_item_label": unescape(label),
+                        "prior_class_no": class_no,
+                        "prior_similarity_codes": sc_codes,
+                        "prior_item_type": "service" if "업" in label or int(class_no or 0) >= 35 else "goods",
+                        "source_page_or_source_field": f"kipris_detail_api:{ann}",
+                        "parsing_confidence": "high"
+                    })
+    
+    # 테이블 파싱 실패 시 텍스트 기반 폴백 (이미 구현된 로직 활용)
+    if not items:
+        # 기존 텍스트 파싱 로직 호출을 위해 HTML 태그 제거
+        text_content = re.sub(r'<[^>]+>', '\n', html)
+        items = _parse_designated_items_from_text(text_content, f"kipris_detail_text:{ann}")
+        
+    return items
 
 
 def _normalize_similarity_code(value: str) -> str:
@@ -256,14 +333,118 @@ def extract_prior_designated_items(item: dict) -> list[dict]:
     return []
 
 
+def fetch_trademark_detail(ann: str) -> dict:
+    """상표 상세 정보를 조회한다 (지정상품 및 유사군코드 추출용)."""
+    if USE_MOCK:
+        return {"success": False, "msg": "MOCK mode - detail fetch skipped"}
+
+    sess = _get_session()
+    # KIPRIS 상세 페이지 URL
+    url = f"https://www.kipris.or.kr/kportal/search/selectTmDetail.do?applno={ann}"
+    
+    try:
+        # KIPRIS는 세션과 Referer를 엄격하게 체크함
+        resp = sess.get(url, timeout=15, headers={
+            "Referer": "https://www.kipris.or.kr/kportal/search/search_trademark.do",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        })
+        resp.raise_for_status()
+        html = resp.text
+        
+        # KIPRIS 상세페이지는 AJAX로 지정상품을 불러오기도 함
+        # 하지만 초기 HTML에 일부 정보가 포함되어 있을 수 있으므로 추출 시도
+        sc_codes = _parse_similarity_codes_from_html(html)
+        designated_items = _parse_designated_items_from_html(html, ann)
+        
+        # 만약 초기 HTML에 지정상품이 없으면 AJAX API 직접 호출 시도
+        if not designated_items:
+            # KIPRIS의 지정상품 리스트 AJAX 호출 패턴
+            ajax_url = "https://www.kipris.or.kr/kportal/search/selectTmGoodsList.do"
+            ajax_resp = sess.post(ajax_url, data={"applno": ann}, timeout=10)
+            if ajax_resp.status_code == 200 and ajax_resp.text.strip():
+                ajax_html = ajax_resp.text
+                ajax_items = _parse_designated_items_from_html(ajax_html, ann)
+                if ajax_items:
+                    designated_items = ajax_items
+                    sc_codes = sorted(list(set(sc_codes) | set(_parse_similarity_codes_from_html(ajax_html))))
+
+        return {
+            "success": True,
+            "html": html,
+            "sc_codes": sc_codes,
+            "designated_items": designated_items,
+            "has_designated_items": len(designated_items) > 0
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "msg": f"Detail fetch failed: {str(e)}"
+        }
+
 def enrich_search_results_with_item_details(items: list[dict]) -> list[dict]:
+    """선행상표 목록에 상세 정보(지정상품/유사군코드)를 연동한다.
+    
+    각 선행상표에 대해 KIPRIS '상표지정상품조회' 상세 페이지를 호출하여
+    실제 지정상품별 유사군코드(S0201, S1212 등)를 수집하고,
+    이를 prior_designated_items 및 queried_codes에 정확히 반영한다.
+    
+    핵심 목적:
+    - 금융(S0201) 검색 시 오렌G트리가 S0201 코드를 가졌는지 정밀 확인
+    - same_class_only vs exact_primary_overlap 구분이 가능하도록 SC 코드 수집
+    """
     enriched: list[dict] = []
-    for item in items:
+    MAX_DETAIL_FETCH = 10  # 상위 후보들만 상세 조회 (KIPRIS 차단 방지)
+    
+    for idx, item in enumerate(items):
+        ann = item.get("applicationNumber")
+        
+        # 1. 기존 fixture나 텍스트에서 먼저 추출 시도
         designated_items = extract_prior_designated_items(item)
+        
+        # 2. 상세 페이지에서 실제 SC 코드 수집
+        # 상위 10개 후보에 대해 반드시 상세 조회 시도 (정밀 매칭을 위해)
+        if len(enriched) < MAX_DETAIL_FETCH and ann:
+            detail = fetch_trademark_detail(ann)
+            item["detail_fetch_success"] = detail["success"]
+            
+            if detail["success"]:
+                html_sc_codes = detail.get("sc_codes", [])
+                html_designated_items = detail.get("designated_items", [])
+                
+                # HTML에서 추출한 SC 코드가 있으면 사용
+                if html_designated_items:
+                    designated_items = html_designated_items
+                    item["detail_html_text"] = detail.get("html", "")
+                    item["detail_sc_codes"] = html_sc_codes
+                elif html_sc_codes:
+                    # SC 코드만 추출된 경우, 指定商品 없이 코드만 존재하는 경우
+                    #dummy designated item으로 코드 정보 유지
+                    if not designated_items:
+                        designated_items = [{
+                            "prior_item_label": "상표지정상품(상세정보)",
+                            "prior_class_no": item.get("classificationCode", ""),
+                            "prior_similarity_codes": html_sc_codes,
+                            "prior_item_type": "unknown",
+                            "source_page_or_source_field": f"kipris_detail:{ann}",
+                            "parsing_confidence": "high"
+                        }]
+                    item["detail_sc_codes"] = html_sc_codes
+            else:
+                item["detail_fetch_error"] = detail.get("msg")
+        
+        # 3. 추출된 유사군코드를 queried_codes에도 반영 (검색 가시성 및 비교용)
+        all_sc = set(item.get("queried_codes", []))
+        for d in designated_items:
+            for code in d.get("prior_similarity_codes", []):
+                all_sc.add(code)
+        item["queried_codes"] = sorted(list(all_sc))
+        
         if designated_items:
-            enriched.append({**item, "prior_designated_items": designated_items})
+            item["prior_designated_items"] = designated_items
+            enriched.append(item)
         else:
             enriched.append(item)
+    
     return enriched
 
 
@@ -284,60 +465,75 @@ def build_kipris_search_plan(
         classes = [""]
 
     plan: list[dict] = []
-    for class_no in classes:
-        if primary_codes:
-            plan.append(
-                {
-                    "query_mode": "primary_sc",
-                    "class_no": class_no,
-                    "codes": primary_codes,
-                    "label": QUERY_MODE_LABELS["primary_sc"],
-                    "search_formula": f"TN={trademark_name} AND CLASS={class_no or '-'} AND SC={' OR '.join(primary_codes)}",
-                    "max_pages": 3,
-                }
-            )
-        plan.append(
-            {
-                "query_mode": "class_only",
-                "class_no": class_no,
-                "codes": [],
-                "label": QUERY_MODE_LABELS["class_only"],
-                "search_formula": f"TN={trademark_name} AND CLASS={class_no or '-'}",
-                "max_pages": 3,
-            }
-        )
-        if related_codes:
-            plan.append(
-                {
-                    "query_mode": "related_sc",
-                    "class_no": class_no,
-                    "codes": related_codes,
-                    "label": QUERY_MODE_LABELS["related_sc"],
-                    "search_formula": f"TN={trademark_name} AND CLASS={class_no or '-'} AND RELATED_SC={' OR '.join(related_codes)}",
-                    "max_pages": 2,
-                }
-            )
-        if retail_codes:
-            plan.append(
-                {
-                    "query_mode": "retail_sc",
-                    "class_no": class_no,
-                    "codes": retail_codes,
-                    "label": QUERY_MODE_LABELS["retail_sc"],
-                    "search_formula": f"TN={trademark_name} AND CLASS={class_no or '-'} AND SC={' OR '.join(retail_codes)}",
-                    "max_pages": 2,
-                }
-            )
+    
+    # Query A: TN broad fallback (TN only) - 최상위 fallback
+    # 가장 먼저 시도하거나, 마지막에 시도할 수 있지만 
+    # 여기서는 검색 실패를 방지하기 위해 상위 레벨부터 구성
     plan.append(
         {
             "query_mode": "text_fallback",
             "class_no": "",
             "codes": [],
             "label": QUERY_MODE_LABELS["text_fallback"],
-            "search_formula": f"TN={trademark_name}",
-            "max_pages": 2,
+            "search_formula": f"({trademark_name})",
+            "max_pages": 3,
         }
     )
+
+    for class_no in classes:
+        # Query B: TN + class
+        plan.append(
+            {
+                "query_mode": "class_only",
+                "class_no": class_no,
+                "codes": [],
+                "label": QUERY_MODE_LABELS["class_only"],
+                "search_formula": f"({trademark_name}) * ({class_no or '-'})",
+                "max_pages": 3,
+            }
+        )
+        
+        # Query C: TN + class + primary SC
+        if primary_codes:
+            for code in primary_codes:
+                plan.append(
+                    {
+                        "query_mode": "primary_sc",
+                        "class_no": class_no,
+                        "codes": [code],
+                        "label": QUERY_MODE_LABELS["primary_sc"],
+                        "search_formula": f"({trademark_name}) * ({class_no or '-'}) * ({code})",
+                        "max_pages": 3,
+                    }
+                )
+        
+        # Query D: TN + class + related SC
+        if related_codes:
+            for code in related_codes:
+                plan.append(
+                    {
+                        "query_mode": "related_sc",
+                        "class_no": class_no,
+                        "codes": [code],
+                        "label": QUERY_MODE_LABELS["related_sc"],
+                        "search_formula": f"({trademark_name}) * ({class_no or '-'}) * ({code})",
+                        "max_pages": 2,
+                    }
+                )
+                
+        if retail_codes:
+            for code in retail_codes:
+                plan.append(
+                    {
+                        "query_mode": "retail_sc",
+                        "class_no": class_no,
+                        "codes": [code],
+                        "label": QUERY_MODE_LABELS["retail_sc"],
+                        "search_formula": f"({trademark_name}) * ({class_no or '-'}) * ({code})",
+                        "max_pages": 2,
+                    }
+                )
+                
     return plan
 
 
@@ -438,17 +634,33 @@ def _build_search_expression(
     class_no: str | int | None = None,
     query_mode: str = "",
 ) -> str:
+    """KIPRIS 검색 공식 빌더. 
+    기존의 [brackets] 형식이 KIPRIS에서 에러(null)를 유발하는 경우가 있어,
+    보다 안정적인 (word) * (class) 형식을 사용한다.
+    """
     text = str(word or "").strip()
     code = str(similar_goods_code or "").strip().upper()
     class_text = _normalize_class_no(class_no)
+    
     if not text:
         return ""
-    parts = [f"TN=[{text}]"]
+        
+    # TN= 형식보다는 (word) 형식이 부분일치(highlight) 검색에 더 유리한 경우가 있음
+    # 하지만 명시적으로 TN=을 쓰는 것이 필드 검색의 정석이므로 
+    # TN=word* 형식을 시도하되, brackets은 제거한다.
+    # KIPRIS 공식 가이드: TN=삼성 (정확히 '삼성'), TN=삼성* ('삼성'으로 시작하는 모든 것)
+    # 실제 테스트 결과: (G트리) * (36) 처럼 괄호와 * 연산자를 쓰는 것이 가장 안정적.
+    
+    parts = [f"({text})"]
     if class_text:
-        parts.append(f"CLASS=[{class_text}]")
+        # CL= 또는 CLASS= 보다는 키워드로서의 류 번호가 더 잘 잡히는 경우가 많음
+        parts.append(f"({class_text})")
+        
     if code and query_mode in {"primary_sc", "related_sc", "retail_sc"}:
-        parts.append(f"SC=[{code}]")
-    return " AND ".join(parts)
+        parts.append(f"({code})")
+        
+    # KIPRIS expression에서 *는 AND 연산자임
+    return " * ".join(parts)
 
 
 def _parse_classes(prc_html: str) -> list[str]:
@@ -509,6 +721,7 @@ def search_trademark(
     )
 
     sess = _get_session()
+    resp_text = ""
     try:
         resp = sess.post(
             BASE_URL,
@@ -524,29 +737,47 @@ def search_trademark(
             },
             timeout=20,
         )
+        resp_text = resp.text.strip()
         resp.raise_for_status()
     except requests.exceptions.Timeout:
-        return _err("KIPRIS request timed out after 20s")
+        return _err("KIPRIS request timed out after 20s", status=STATUS_TRANSPORT_ERROR)
     except requests.exceptions.RequestException as exc:
-        return _err(str(exc))
+        return _err(str(exc), status=STATUS_TRANSPORT_ERROR)
 
+    # 1단계: Transport success 확인
+    if not resp_text:
+        return _err("Empty response from KIPRIS", status=STATUS_BLOCKED)
+    
+    if "<!DOCTYPE html>" in resp_text.lower() or "<html" in resp_text.lower():
+        # KIPRIS may return HTML for blocks/errors
+        return _err("Unexpected HTML response (possible block or captcha)", 
+                    status=STATUS_BLOCKED, 
+                    preview=resp_text[:500])
+
+    # 2단계: Result extraction
     try:
-        root = ET.fromstring(resp.text.strip())
+        root = ET.fromstring(resp_text)
     except ET.ParseError as exc:
-        return _err(f"XML parse error: {exc}")
+        return _err(f"XML parse error: {exc}", status=STATUS_PARSE_ERROR, preview=resp_text[:500])
 
     flag = root.findtext("flag", "")
     if flag != "SUCCESS":
         msg = root.findtext("message", flag)
-        return _err(f"KIPRIS error: {msg}")
+        return _err(f"KIPRIS error: {msg}", status=STATUS_PARSE_ERROR, preview=resp_text[:500])
 
     total_count = int(root.findtext(".//searchFound", "0"))
     items = _parse_articles(root)
+    
+    # 류(Class) 필터링 - KIPRIS 검색 결과에 다른 류가 포함될 수 있으므로 클라이언트 사이드에서 재검증
     if target_class:
         items = [item for item in items if target_class in item["classificationCode"].split(",")]
 
+    status = STATUS_SUCCESS_HITS if items else STATUS_SUCCESS_ZERO
+    
     return {
         "success": True,
+        "search_status": status,
+        "http_status": 200,
         "result_code": "00",
         "result_msg": "OK",
         "total_count": total_count,
@@ -557,6 +788,7 @@ def search_trademark(
         "query_class_no": target_class,
         "query_codes": [similar_goods_code] if similar_goods_code else [],
         "search_expression": expression or word,
+        "response_text_preview": resp_text[:500]
     }
 
 
@@ -580,6 +812,7 @@ def search_all_pages(
         query_mode=query_mode,
     )
 
+    last_result = None
     for page in range(1, max_pages + 1):
         result = search_trademark(
             word,
@@ -589,6 +822,7 @@ def search_all_pages(
             page_no=page,
             query_mode=query_mode,
         )
+        last_result = result
         if not result["success"]:
             if page == 1:
                 return result
@@ -598,8 +832,7 @@ def search_all_pages(
         page_items = result["items"]
         if not page_items:
             break
-        if target_class:
-            page_items = [item for item in page_items if target_class in item["classificationCode"].split(",")]
+            
         all_items.extend(
             [
                 {
@@ -618,30 +851,40 @@ def search_all_pages(
         time.sleep(0.5)
 
     enriched_items = enrich_search_results_with_item_details(all_items)
+    
+    # search_all_pages에서도 최종 상태를 집계하여 반환
+    final_status = STATUS_SUCCESS_HITS if enriched_items else STATUS_SUCCESS_ZERO
+    if last_result and not last_result["success"]:
+        final_status = last_result["search_status"]
+
     return {
         "success": True,
+        "search_status": final_status,
         "result_code": "00",
         "result_msg": "OK",
         "total_count": total_count,
         "filtered_count": len(enriched_items),
         "items": enriched_items,
-        "mock": False,
+        "mock": last_result.get("mock", False) if last_result else False,
         "query_mode": query_mode,
         "query_class_no": target_class,
         "query_codes": [similar_goods_code] if similar_goods_code else [],
         "search_expression": search_expression or word,
+        "response_text_preview": last_result.get("response_text_preview", "") if last_result else "",
     }
 
 
-def _err(msg: str) -> dict:
+def _err(msg: str, status: str = "error", preview: str = "") -> dict:
     return {
         "success": False,
+        "search_status": status,
         "result_code": "-1",
         "result_msg": msg,
         "total_count": 0,
         "filtered_count": 0,
         "items": [],
         "mock": False,
+        "response_text_preview": preview,
     }
 
 

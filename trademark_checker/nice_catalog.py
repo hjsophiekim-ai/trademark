@@ -8,12 +8,20 @@ from pathlib import Path
 from typing import Callable, Iterable
 from xml.etree import ElementTree as ET
 
-from similarity_code_db import (
-    ALIAS_TABLE_PATH,
-    LEARNED_MATCHES_PATH,
-    SIMILARITY_CODE_SOURCE_PATH,
-    derive_similarity_mapping,
-)
+try:
+    from .similarity_code_db import (
+        ALIAS_TABLE_PATH,
+        LEARNED_MATCHES_PATH,
+        SIMILARITY_CODE_SOURCE_PATH,
+        derive_similarity_mapping,
+    )
+except ImportError:
+    from similarity_code_db import (
+        ALIAS_TABLE_PATH,
+        LEARNED_MATCHES_PATH,
+        SIMILARITY_CODE_SOURCE_PATH,
+        derive_similarity_mapping,
+    )
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = Path(__file__).resolve().parent / "data"

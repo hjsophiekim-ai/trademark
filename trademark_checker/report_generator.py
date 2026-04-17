@@ -143,6 +143,11 @@ def _render_relative_section(pdf: KoreanPDF, width: float, payload: dict) -> Non
 
 
 def _render_search_debug_section(pdf: KoreanPDF, width: float, payload: dict) -> None:
+    if payload.get("search_failed"):
+        _write_lines(pdf, width, [f"⚠️ SEARCH FAILED: {payload.get('search_error_msg', 'Unknown Error')}"])
+        _write_lines(pdf, width, ["Note: Results may be incomplete or misleading due to engine failure."])
+        pdf.ln(1)
+
     pcodes = ", ".join(payload.get("selected_primary_codes", [])) or "-"
     rcodes = ", ".join(payload.get("selected_related_codes", [])) or "-"
     etcodes = ", ".join(payload.get("selected_retail_codes", [])) or "-"
@@ -157,10 +162,11 @@ def _render_search_debug_section(pdf: KoreanPDF, width: float, payload: dict) ->
         _write_lines(pdf, width, ["search_queries_attempted / search_hits_per_query:"])
         for eq in executed_queries:
             hits = eq.get("result_count", 0)
-            mark = "[HIT]" if hits > 0 else "[   ]"
+            status = eq.get("search_status", "unknown")
+            mark = "[HIT]" if status == "success_with_hits" else "[   ]"
             _write_lines(pdf, width, [
-                f"  {mark} [{eq.get('query_mode', '-')}] class={eq.get('class_no', '-')} "
-                f"code={eq.get('code', '') or '(없음)'} -> {hits}건 | {eq.get('search_formula', '')}"
+                f"  {mark} [{eq.get('query_mode', '-')}] {status.upper()} | "
+                f"class={eq.get('class_no', '-')} code={eq.get('code', '') or '(없음)'} -> {hits}건 | {eq.get('search_formula', '')}"
             ])
     else:
         _write_lines(pdf, width, ["search_queries_attempted: (정보 없음)"])
@@ -184,6 +190,31 @@ def _render_single_report(pdf: KoreanPDF, width: float, payload: dict, title: st
         pdf.ln(1)
 
     score_explanation = payload.get("score_explanation", {})
+    score = payload.get("score", 0)
+    stage1_cap = payload.get("absolute_probability_cap", 95)
+    stage2_score = payload.get("stage2_relative_cap_adjusted", score)
+    
+    # 주된 거절 사유 판단
+    is_stage1_main = stage1_cap < stage2_score and stage1_cap < 60
+    is_stage2_main = stage2_score <= stage1_cap and stage2_score < 60
+    
+    if is_stage1_main:
+        pdf.kfont(11, bold=True)
+        pdf.set_text_color(200, 0, 0)
+        _write_lines(pdf, width, [f"⚠️ 주요 거절 사유: 단어 자체의 식별력 부족 (Stage 1)"])
+        pdf.set_text_color(0, 0, 0)
+        pdf.kfont(10)
+        _write_lines(pdf, width, [f"선행상표와 상관없이, 상표법 제33조에 의거하여 단어 자체가 공익상 특정인에게 독점시킬 수 없는 성질을 가지고 있습니다. (상한선: {stage1_cap}%)"])
+        pdf.ln(1)
+    elif is_stage2_main:
+        pdf.kfont(11, bold=True)
+        pdf.set_text_color(200, 0, 0)
+        _write_lines(pdf, width, [f"⚠️ 주요 거절 사유: 선행상표와의 충돌 위험 (Stage 2)"])
+        pdf.set_text_color(0, 0, 0)
+        pdf.kfont(10)
+        _write_lines(pdf, width, [f"유사한 선행상표가 이미 등록되어 있어 혼동의 우려가 있습니다. (상대적 점수: {stage2_score}%)"])
+        pdf.ln(1)
+
     summary_rows = [
         ("specific_product", payload.get("specific_product", "-") or "-"),
         ("kind", _kind_label(payload.get("selected_kind"))),

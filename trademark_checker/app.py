@@ -2127,6 +2127,10 @@ elif st.session_state.step == 4:
                 retail_codes=retail_codes,
             )
             executed_queries = []
+            
+            # 검색 실패 여부 트래킹
+            any_search_failed = False
+            last_error_msg = ""
 
             for step in search_plan:
                 codes = step.get("codes") or [""]
@@ -2138,6 +2142,14 @@ elif st.session_state.step == 4:
                         max_pages=step.get("max_pages", 3),
                         query_mode=step.get("query_mode", ""),
                     )
+                    
+                    search_status = result.get("search_status", "unknown")
+                    is_success = result.get("success", False)
+                    
+                    if not is_success or search_status in ["transport_error", "parse_error", "blocked_or_unexpected_page"]:
+                        any_search_failed = True
+                        last_error_msg = result.get("result_msg", "Unknown error")
+
                     executed_queries.append(
                         {
                             "query_mode": step.get("query_mode", ""),
@@ -2145,6 +2157,9 @@ elif st.session_state.step == 4:
                             "code": code,
                             "search_formula": step.get("search_formula", ""),
                             "result_count": len(result.get("items", [])) if result else 0,
+                            "search_status": search_status,
+                            "http_status": result.get("http_status", 200),
+                            "response_preview": result.get("response_text_preview", "")[:200]
                         }
                     )
                     if result and result.get("items"):
@@ -2162,6 +2177,19 @@ elif st.session_state.step == 4:
                 selected_fields=[field],
                 specific_product=config.get("specific_product", ""),
             )
+            
+            # 검색 실패 시 분석 결과 보정
+            if any_search_failed:
+                field_analysis["search_failed"] = True
+                field_analysis["search_error_msg"] = last_error_msg
+                # 검색 실패 시 등록 가능성을 과도하게 높게 잡지 않도록 보정 (예: 90% -> 50%)
+                if field_analysis.get("score", 0) > 50:
+                    field_analysis["score"] = 50
+                    field_analysis["band"] = get_result_style(50)[2] # 등록 가능성 높음 -> 주의 필요
+                    field_analysis["score_explanation"]["notes"].append(
+                        f"⚠️ KIPRIS 검색 중 오류({last_error_msg})가 발생하여 결과를 확신할 수 없습니다. 점수를 하향 조정했습니다."
+                    )
+
             field_reports.append(
                 {
                     **field_analysis,
@@ -2180,6 +2208,8 @@ elif st.session_state.step == 4:
                     "search_plan": search_plan,
                     "executed_queries": executed_queries,
                     "search_source": "실제 KIPRIS 데이터" if used_real_search else "Mock 데이터 또는 제한 조회",
+                    "search_failed": any_search_failed,
+                    "search_error_msg": last_error_msg,
                     "improvements": get_improvements(
                         st.session_state.trademark_name,
                         derived_codes,
@@ -2269,6 +2299,10 @@ elif st.session_state.step == 4:
 
         # ── 검색 파이프라인 디버그 섹션 ──────────────────────────────────────
         with st.expander("🔍 검색 파이프라인 디버그", expanded=False):
+            if report.get("search_failed"):
+                st.error(f"❌ 검색 엔진 오류: {report.get('search_error_msg')}")
+                st.caption("일부 검색이 실패하여 '0건'으로 오판했을 가능성이 있습니다. 결과 신뢰도가 낮습니다.")
+
             _pcodes = report.get("selected_primary_codes", [])
             _rcodes = report.get("selected_related_codes", [])
             _etcodes = report.get("selected_retail_codes", [])
@@ -2282,13 +2316,37 @@ elif st.session_state.step == 4:
                 st.markdown("**search_queries_attempted** / **search_hits_per_query**:")
                 for eq in executed_queries:
                     hits = eq.get("result_count", 0)
-                    icon = "✅" if hits > 0 else "⬜"
+                    status = eq.get("search_status", "unknown")
+                    
+                    if status == "success_with_hits":
+                        icon = "✅"
+                        status_label = f"SUCCESS ({hits}건)"
+                    elif status == "success_zero_hits":
+                        icon = "⬜"
+                        status_label = "ZERO HITS"
+                    elif status == "transport_error":
+                        icon = "🚨"
+                        status_label = "TRANSPORT ERROR"
+                    elif status == "parse_error":
+                        icon = "⚠️"
+                        status_label = "PARSE ERROR"
+                    elif status == "blocked_or_unexpected_page":
+                        icon = "⛔"
+                        status_label = "BLOCKED/HTML"
+                    else:
+                        icon = "❓"
+                        status_label = status
+
                     st.markdown(
                         f"- {icon} `[{eq.get('query_mode','-')}]` "
+                        f"**{status_label}** | "
                         f"class={eq.get('class_no','-')} "
-                        f"code={eq.get('code','-') or '(없음)'} → "
-                        f"**{hits}건** | `{eq.get('search_formula','')}`"
+                        f"code={eq.get('code','-') or '(없음)'} | "
+                        f"`{eq.get('search_formula','')}`"
                     )
+                    if eq.get("response_preview"):
+                        with st.expander(f"Response Preview for {eq.get('query_mode')}", expanded=False):
+                            st.code(eq.get("response_preview"))
             else:
                 st.caption("executed_queries 정보 없음 (이전 버전 분석 결과)")
             ota = report.get("overlap_type_analysis", {})
@@ -2299,8 +2357,22 @@ elif st.session_state.step == 4:
                     f"**strongest prior codes**: `{', '.join(ota.get('strongest_matching_prior_codes',[]))  or '-'}`"
                 )
 
-        st.markdown("### 점수 산정 해설")
+        st.markdown("### 📊 점수 산정 및 등록 가능성 분석")
         score_explanation = report.get("score_explanation", {})
+        stage1_cap = report.get("absolute_probability_cap", 95)
+        stage2_score = report.get("stage2_relative_cap_adjusted", score)
+        
+        # 주된 거절 사유 판단
+        is_stage1_main = stage1_cap < stage2_score and stage1_cap < 60
+        is_stage2_main = stage2_score <= stage1_cap and stage2_score < 60
+        
+        if is_stage1_main:
+            st.error(f"⚠️ **주요 거절 사유: 단어 자체의 식별력 부족 (Stage 1)**")
+            st.markdown(f"선행상표와 상관없이, 상표법 제33조에 의거하여 단어 자체가 공익상 특정인에게 독점시킬 수 없는 성질을 가지고 있습니다. (상한선: {stage1_cap}%)")
+        elif is_stage2_main:
+            st.error(f"⚠️ **주요 거절 사유: 선행상표와의 충돌 위험 (Stage 2)**")
+            st.markdown(f"유사한 선행상표가 이미 등록되어 있어 혼동의 우려가 있습니다. (상대적 점수: {stage2_score}%)")
+        
         st.markdown(
             f"""
             <div class="card">
